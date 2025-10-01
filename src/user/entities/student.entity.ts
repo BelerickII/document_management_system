@@ -35,4 +35,10 @@ export class Student extends User {
         default: ModeOfEntry.UTME,
     })
     mode_of_entry: ModeOfEntry;
+
+    @Column({
+        type: "boolean",
+        nullable: false
+    })
+    graduated: boolean;
 }

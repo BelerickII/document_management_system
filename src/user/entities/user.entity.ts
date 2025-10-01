@@ -41,6 +41,12 @@ export abstract class User {
     })
     password: string;
 
+  @Column({
+        type: "boolean",
+        nullable: false
+    })
+    isActive: Boolean;    
+
     @Column({
         // type: "enum",
         // enum: UserRole,
