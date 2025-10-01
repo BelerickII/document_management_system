@@ -45,7 +45,13 @@ export abstract class User {
         type: "boolean",
         nullable: false
     })
-    isActive: Boolean;    
+    isActive: Boolean;
+
+    @Column({
+        type: "boolean",
+        nullable: false,
+    })
+    mustResetPassword: boolean;
 
     @Column({
         // type: "enum",
