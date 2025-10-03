@@ -7,6 +7,13 @@ export enum ModeOfEntry {
     DIRECT_ENTRY = 'Direct Entry',
 }
 
+export enum Department {
+    COMPUTER_SCIENCE = "Computer Science",
+    SOFTWARE_ENGINEERING = "Software Engineering",
+    DATA_SCIENCE = "Data Science",
+    CYBERSECURITY = "Cybersecurity",
+}
+
 @ChildEntity(UserRole.STUDENT)
 export class Student extends User {    
     @Column({
@@ -17,8 +24,8 @@ export class Student extends User {
     matric_no: number; 
     
     @Column({
-        type: "varchar",
-        length: 100,
+        type: "enum",
+        enum: Department,        
         nullable: false,
     })
     department: string;
