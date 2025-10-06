@@ -1,6 +1,6 @@
 import { UserRole } from "../Entities/user.entity";
 import { IsEnum, IsNotEmpty, IsNumber, IsEmail, IsBoolean, IsString } from 'class-validator';
-import { ModeOfEntry } from '../Entities/student.entity';
+import { Department, ModeOfEntry } from '../Entities/student.entity';
 
 export class CreateStudentDto {
     @IsNotEmpty()
@@ -24,8 +24,8 @@ export class CreateStudentDto {
     role: UserRole = UserRole.STUDENT;
     
     @IsNotEmpty()
-    @IsString()
-    department: string;
+    @IsEnum(Department)
+    department: Department;
     
     @IsNotEmpty()
     @IsEnum(ModeOfEntry)

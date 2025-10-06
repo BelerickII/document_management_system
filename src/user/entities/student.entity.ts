@@ -28,7 +28,7 @@ export class Student extends User {
         enum: Department,        
         nullable: false,
     })
-    department: string;
+    department: Department;
 
     @Column({
         type: "int",        
