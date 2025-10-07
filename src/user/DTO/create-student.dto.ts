@@ -17,7 +17,19 @@ export class CreateStudentDto {
 
     @IsNotEmpty()
     @IsString()
-    lastName: string;   
+    lastName: string;
+    
+    @IsNotEmpty()
+    @IsString()
+    password: string;
+
+    @IsNotEmpty()
+    @IsBoolean()
+    mustResetPassword: string;
+
+    @IsNotEmpty()
+    @IsBoolean()
+    isActive: string;
     
     @IsNotEmpty()
     @IsEnum(UserRole)
@@ -35,6 +47,7 @@ export class CreateStudentDto {
     @IsNumber()
     level: number;
 
+    @IsNotEmpty()
     @IsBoolean()
     graduated: boolean;
 }
