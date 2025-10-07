@@ -4,9 +4,9 @@ import { User, UserRole } from "./user.entity";
 @ChildEntity(UserRole.FACULTY)
 export class FacultyStaff extends User {
     @Column({
-        type: "int",        
+        type: "string",        
         unique: true,
         nullable: false
     })
-    staffID: number;
+    staffID: string;
 }

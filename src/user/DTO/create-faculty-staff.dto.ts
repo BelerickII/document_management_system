@@ -1,10 +1,10 @@
-import { IsNotEmpty, IsEnum, IsEmail, IsNumber, IsString, IsBoolean, } from 'class-validator';
+import { IsNotEmpty, IsEnum, IsEmail, IsString, IsBoolean, IsNumberString, } from 'class-validator';
 import { UserRole } from '../Entities/user.entity';
 
 export class CreateFacultyDto { 
     @IsNotEmpty()
-    @IsNumber()
-    staffId: number;     
+    @IsNumberString()
+    staffId: string;     
     
     @IsEmail()
     @IsNotEmpty()

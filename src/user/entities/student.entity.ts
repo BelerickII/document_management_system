@@ -17,11 +17,11 @@ export enum Department {
 @ChildEntity(UserRole.STUDENT)
 export class Student extends User {    
     @Column({
-        type: "int",        
+        type: "string",        
         unique: true,
         nullable: false
     })
-    matric_no: number; 
+    matric_no: string; 
     
     @Column({
         type: "enum",

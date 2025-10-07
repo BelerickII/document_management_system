@@ -1,11 +1,11 @@
 import { UserRole } from "../Entities/user.entity";
-import { IsEnum, IsNotEmpty, IsNumber, IsEmail, IsBoolean, IsString } from 'class-validator';
+import { IsEnum, IsNotEmpty, IsNumber, IsEmail, IsBoolean, IsString, IsNumberString } from 'class-validator';
 import { Department, ModeOfEntry } from '../Entities/student.entity';
 
 export class CreateStudentDto {
     @IsNotEmpty()
-    @IsNumber()
-    matric_no: number;    
+    @IsNumberString()
+    matric_no: string;    
     
     @IsEmail()
     @IsNotEmpty()
