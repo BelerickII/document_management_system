@@ -1,6 +1,7 @@
 import { UserRole } from "../Entities/user.entity";
-import { IsEnum, IsNotEmpty, IsNumber, IsEmail, IsBoolean, IsString, IsNumberString } from 'class-validator';
+import { IsEnum, IsNotEmpty, IsEmail, IsString, IsNumberString, IsInt } from 'class-validator';
 import { Department, ModeOfEntry } from '../Entities/student.entity';
+import { Type } from "class-transformer";
 
 export class CreateStudentDto {
     @IsNotEmpty()
@@ -22,14 +23,6 @@ export class CreateStudentDto {
     @IsNotEmpty()
     @IsString()
     password: string;
-
-    @IsNotEmpty()
-    @IsBoolean()
-    mustResetPassword: string;
-
-    @IsNotEmpty()
-    @IsBoolean()
-    isActive: string;
     
     @IsNotEmpty()
     @IsEnum(UserRole)
@@ -44,10 +37,7 @@ export class CreateStudentDto {
     mode_of_entry: ModeOfEntry; 
 
     @IsNotEmpty()
-    @IsNumber()
+    @Type(() => Number)
+    @IsInt()
     level: number;
-
-    @IsNotEmpty()
-    @IsBoolean()
-    graduated: boolean;
 }

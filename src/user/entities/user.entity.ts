@@ -1,4 +1,6 @@
-import { Column, Entity, PrimaryGeneratedColumn, TableInheritance } from "typeorm";
+import { Column, Entity, JoinColumn, OneToOne, PrimaryGeneratedColumn, TableInheritance } from "typeorm";
+import { Student } from "./student.entity";
+import { FacultyStaff } from "./faculty-staff.entity";
 
 export enum UserRole {
     STUDENT = 'student',
@@ -6,29 +8,29 @@ export enum UserRole {
     ADMIN = 'admin',
 }
 
-@Entity("users")
-@TableInheritance({ column: { type: 'enum', name: 'role', enum: UserRole } })
-export abstract class User {
+// @TableInheritance({ column: { type: 'enum', name: 'role', enum: UserRole }})
+@Entity()
+export class User {
     @PrimaryGeneratedColumn()
     id: number;
     
     @Column({
         type: "varchar",
-        length: 150,
+        length: 100,
         nullable: false,        
     })    
     firstName: string;
 
     @Column({
         type: "varchar",
-        length: 150,
+        length: 100,
         nullable: false, 
     })
     lastName: string;
     
     @Column({
         type: "varchar",
-        length: 150,
+        length: 100,
         nullable: false, 
         unique: true,
     })
@@ -36,7 +38,7 @@ export abstract class User {
 
     @Column({
         type: "varchar",
-        length: 150,
+        length: 100,
         nullable: false, 
     })
     password: string;
@@ -54,9 +56,16 @@ export abstract class User {
     mustResetPassword: boolean;
 
     @Column({
-        // type: "enum",
-        // enum: UserRole,
+        type: "enum",
+        enum: UserRole,
         default: UserRole.ADMIN,
     })
     role: UserRole;
+    
+    //It's optional to include this reverse relationship. If terminal throws error remove it.
+    @OneToOne(() => Student, (student) => student.user)
+    student: Student;
+
+    @OneToOne(() => FacultyStaff, (staff) => staff.user)
+    staff: FacultyStaff;
 }

@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsEnum, IsEmail, IsString, IsBoolean, IsNumberString, } from 'class-validator';
+import { IsNotEmpty, IsEnum, IsEmail, IsString, IsNumberString } from 'class-validator';
 import { UserRole } from '../Entities/user.entity';
 
 export class CreateFacultyDto { 
@@ -21,14 +21,6 @@ export class CreateFacultyDto {
     @IsNotEmpty()
     @IsString()
     password: string;
-
-    @IsNotEmpty()
-    @IsBoolean()
-    mustResetPassword: string;
-
-    @IsNotEmpty()
-    @IsBoolean()
-    isActive: string;
 
     @IsNotEmpty()
     @IsEnum(UserRole)

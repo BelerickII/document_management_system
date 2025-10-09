@@ -1,5 +1,5 @@
-import { ChildEntity, Column } from "typeorm";
-import { User, UserRole } from "./user.entity";
+import { Column, Entity, JoinColumn, OneToOne, PrimaryGeneratedColumn } from "typeorm";
+import { User } from "./user.entity";
 
 export enum ModeOfEntry {
     UTME = 'Utme',
@@ -14,10 +14,17 @@ export enum Department {
     CYBERSECURITY = "Cybersecurity",
 }
 
-@ChildEntity(UserRole.STUDENT)
-export class Student extends User {    
+@Entity()
+export class Student {
+    @PrimaryGeneratedColumn()    
+    declare id: number;
+    
+    @OneToOne(() => User, (user) => user.student, {cascade: true, onDelete: 'CASCADE'})
+    @JoinColumn()
+    user: User;
+
     @Column({
-        type: "string",        
+        type: "varchar",        
         unique: true,
         nullable: false
     })
@@ -47,5 +54,5 @@ export class Student extends User {
         type: "boolean",
         nullable: false
     })
-    graduated: boolean;
+    graduated: boolean;    
 }
