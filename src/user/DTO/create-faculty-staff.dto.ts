@@ -4,7 +4,7 @@ import { UserRole } from '../Entities/user.entity';
 export class CreateFacultyDto { 
     @IsNotEmpty()
     @IsNumberString()
-    staffId: string;     
+    staffID: string;     
     
     @IsEmail()
     @IsNotEmpty()

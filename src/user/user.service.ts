@@ -63,7 +63,7 @@ export class UserService {
                         }
 
                         //validate DTO fields with class-validator decorators by calling the function here
-                        await this.validateDto(dto, rowNumber);
+                        await this.validateDtoStudent(dto, rowNumber);
 
                         //if no errors validating, Create User + Student in database
                         await this.createStudentWithUser(dto);
@@ -109,9 +109,10 @@ export class UserService {
 
     }
 
+    //----------------Validation Section using the DTOs for each of the entities instance----------------//
     /*Validates a DTO instance i.e a row from the CSV now a JS object; using class-validator
     Throws a BadRequestException if validation fails*/
-    private async validateDto(dto: CreateStudentDto, rowNumber: number): Promise<void> {
+    private async validateDtoStudent(dto: CreateStudentDto, rowNumber: number): Promise<void> {
         const dtoInstance = plainToInstance(CreateStudentDto, dto);
         const validationErrors = await validate(dtoInstance);
 
@@ -122,7 +123,30 @@ export class UserService {
         }
     }
 
-    //Just trying something
+    private async validateDtoStaff(dto: CreateFacultyDto, rowNumber: number): Promise<void> {
+        const dtoInstance = plainToInstance(CreateFacultyDto, dto);
+        const validationErrors = await validate(dtoInstance);
+
+        if (validationErrors.length > 0) {
+            const messages = validationErrors
+                .flatMap((ve) => Object.values(ve.constraints ?? {}).map((m) => `${ve.property}: ${m}`),).join('; ');
+                throw new BadRequestException(`Row ${rowNumber} validation failed: ${messages}`)
+        }
+    }
+
+    private async validateDtoAdmin(dto: CreateUserDto, rowNumber: number): Promise<void> {
+        const dtoInstance = plainToInstance(CreateUserDto, dto);
+        const validationErrors = await validate(dtoInstance);
+
+        if (validationErrors.length > 0) {
+            const messages = validationErrors
+                .flatMap((ve) => Object.values(ve.constraints ?? {}).map((m) => `${ve.property}: ${m}`),).join('; ');
+                throw new BadRequestException(`Row ${rowNumber} validation failed: ${messages}`)
+        }
+    }
+
+
+    //Injecting the custom repo for user inside this service module
     async createUser(dto: CreateUserDto): Promise<User> {
         return this.userRepo.createUser(dto);
     }
@@ -162,7 +186,7 @@ export class UserService {
             }
 
             //validate incoming DTO manually
-            await this.validateDto(dto, 1);
+            await this.validateDtoStudent(dto, 1);
 
             //create user + student record using the existing method above
             const student = await this.createStudentWithUser(dto);
@@ -179,5 +203,60 @@ export class UserService {
     }
 
     //Logic handling the creation of a Faculty Staff
+    async createStaff (dto: CreateFacultyDto): Promise<FacultyStaff> {
+        try {            
+            //Trim spaces in strings
+            for (const key in dto) {
+                if (typeof dto[key] === 'string') dto[key] = dto[key].trim();
+            }
+
+            //Check for existing student by matric number
+            const existing = await this.staffRepo.findOne({
+                where: {staffID: dto.staffID},
+            });
+
+            if (existing){
+                throw new BadRequestException(`Staff with this ID number "${dto.staffID}" already exists`)
+            }
+
+            //validate incoming DTO manually
+            await this.validateDtoStaff(dto, 1);
+
+            const user = await this.createUser(dto);
+
+            //Create linked staff record in DB
+            const staff = this.staffRepo.create({
+                user,
+                staffID: dto.staffID                           
+            } as Partial<FacultyStaff>);
+
+        return await this.staffRepo.save(staff);        
+
+        } catch (error) {
+            this.logger.error('Error creating staff record', error);
+            throw new BadRequestException(error.message || 'Failed to create staff record')            
+        }
+    }
+
+    //Logic handling the creation of another admin
+    async createAdmin (dto: CreateUserDto): Promise<User> {
+        try {
+           //Trim spaces in strings
+            for (const key in dto) {
+                if (typeof dto[key] === 'string') dto[key] = dto[key].trim();
+            }
+
+            //validate incoming DTO manually
+            await this.validateDtoAdmin(dto, 1);
+
+            const admin = await this.createUser(dto);
+
+            return admin;
+
+        } catch (error) {
+            this.logger.error('Error creating admin record', error);
+            throw new BadRequestException(error.message || 'Failed to create admin record')
+        }
+    }
 
 }
