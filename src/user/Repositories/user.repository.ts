@@ -1,8 +1,9 @@
 import { DataSource, Repository } from "typeorm";
-import { User } from "../Entities/user.entity";
-import { BadRequestException, Injectable } from "@nestjs/common";
-import { CreateUserDto } from "../Dto/create-user.dto";
+import { User, UserRole } from '../Entities/user.entity';
+import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
 import * as bcrypt from 'bcrypt';
+
+import { CreateUserDto } from "../Dto/create-user.dto";
 
 @Injectable()
 export class userRepository extends Repository<User> {
@@ -11,7 +12,7 @@ export class userRepository extends Repository<User> {
         super(User, dataSource.createEntityManager());
     }
 
-    //Section that populate the database with the rows from the CSV
+    //Logic handling the creation of a user; then used to populate related table according to user roles
     async createUser(dto: CreateUserDto): Promise<User> {
         const email = dto.email.toLowerCase();        
 
@@ -42,5 +43,64 @@ export class userRepository extends Repository<User> {
         const savedUser = await this.save(user);
 
         return savedUser;
+    }
+
+    //Logic to fetch all users in the system
+    async findAllUsers(): Promise<{ data: Partial<User>[]; total: number }> {
+        const [users, total] = await this.createQueryBuilder('user')
+            .select([
+                //don't forget to add the createdAt column later
+                'user.id',
+                'user.firstName',
+                'user.lastName',
+                'user.email',
+                'user.isActive',
+                'user.role',
+            ]).getManyAndCount();
+
+        return { data: users, total };
+    }
+
+    //Logic to get the full details of a user (student|staff)
+    async userWithDetails(id: number): Promise<User> {
+        const user = await this.createQueryBuilder('user')
+            .leftJoinAndSelect('user.student', 'student')
+            .leftJoinAndSelect('user.staff', 'staff')
+            .where('user.id = :id', {id})
+            .getOne();
+
+        if (!user) {
+            throw new NotFoundException(`User with ID ${id} not found.`);
+        }
+
+        return user;
+    }
+
+    //The search logic that handles search queries with email, matric no and staffId
+    async findUsers (searchTerm: string): Promise<User[]> {
+        if(!searchTerm) {
+            return [];
+        }
+
+        /*Storing the parameter 'searchTerm' along side a '%' wildcard tell the
+        DB to perform partial matches search of the supplied argument*/
+        const likeSearchTerm = `%${searchTerm}%`;        
+
+        /*ILIKE is an operator in PostgreSQL that performs a case-insensitive search.
+        Good for better user experience than the case sensitive search*/
+        return this.createQueryBuilder('user')
+            .leftJoinAndSelect('user.student', 'student')
+            .leftJoinAndSelect('user.staff', 'staff')
+            .where('user.email ILIKE :likeSearchTerm', {likeSearchTerm})
+            .orWhere('student.matric_no ILIKE :likeSearchTerm', {likeSearchTerm})
+            .orWhere('staff.staffID ILIKE :likeSearchTerm', {likeSearchTerm})
+            .getMany();
+    }
+
+    async findByRole(role: UserRole) {
+        return this.find({
+            where: {role},
+            relations: ['student', 'staff'],
+        });
     }
 }

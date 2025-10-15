@@ -3,19 +3,19 @@ import { BadRequestException, Injectable, InternalServerErrorException, Logger }
 import { User } from './Entities/user.entity';
 import { Student } from './Entities/student.entity';
 import { FacultyStaff } from './Entities/faculty-staff.entity';
+
+import { CreateUserDto } from './Dto/create-user.dto';
 import { CreateStudentDto } from './Dto/create-student.dto';
 import { CreateFacultyDto } from './Dto/create-faculty-staff.dto';
 
-import { plainToInstance } from 'class-transformer';
 import { Readable } from 'stream';
-import { validate } from 'class-validator';
 import csvParser from 'csv-parser';
-import * as bcrypt from 'bcrypt';
+import { validate } from 'class-validator';
+import { plainToInstance } from 'class-transformer';
 
 import { userRepository } from './Repositories/user.repository';
 import { studentRepository } from './Repositories/student.repository';
 import { staffRepository } from './Repositories/faculty-staff.repository';
-import { CreateUserDto } from './Dto/create-user.dto';
 
 
 @Injectable()
@@ -28,7 +28,7 @@ export class UserService {
     
     private readonly logger = new Logger('UserService');
 
-    //-----------------Admin Business Logic-------------------//
+    //**************Admin Business Logic**************//
     async uploadstudentsCsv(file: Express.Multer.File) {
         if (!file) throw new BadRequestException("No CSV file uploaded");
 
@@ -109,7 +109,8 @@ export class UserService {
 
     }
 
-    //----------------Validation Section using the DTOs for each of the entities instance----------------//
+    //*************Validation Section using the DTOs for each of the entities instance*************//
+    
     /*Validates a DTO instance i.e a row from the CSV now a JS object; using class-validator
     Throws a BadRequestException if validation fails*/
     private async validateDtoStudent(dto: CreateStudentDto, rowNumber: number): Promise<void> {
@@ -145,11 +146,12 @@ export class UserService {
         }
     }
 
-
     //Injecting the custom repo for user inside this service module
     async createUser(dto: CreateUserDto): Promise<User> {
         return this.userRepo.createUser(dto);
     }
+
+    //------------POST REQUESTS--------------//
 
     //Section that populate the database with the rows from the CSV
     async createStudentWithUser(dto: CreateStudentDto): Promise<Student> {
@@ -257,6 +259,19 @@ export class UserService {
             this.logger.error('Error creating admin record', error);
             throw new BadRequestException(error.message || 'Failed to create admin record')
         }
+    }
+
+    //------------GET REQUESTS----------//
+    async getAllUsers() {
+       return await this.userRepo.findAllUsers()
+    }
+
+    async getUserById(id: number) {
+        return await this.userRepo.userWithDetails(id)
+    }
+
+    async searchUsers(searchTerm: string) {
+        return await this.userRepo.findUsers(searchTerm)
     }
 
 }

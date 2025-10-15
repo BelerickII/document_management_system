@@ -2,8 +2,8 @@ import { IsNotEmpty, IsEnum, IsEmail, IsString, IsNumberString } from 'class-val
 import { UserRole } from '../Entities/user.entity';
 
 export class CreateFacultyDto { 
-    @IsNotEmpty()
-    @IsNumberString()
+    @IsNotEmpty() 
+    @IsNumberString()  
     staffID: string;     
     
     @IsEmail()

@@ -1,10 +1,11 @@
-import { Body, Controller, Get, Param, Post, UploadedFile, UseInterceptors } from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseIntPipe, Post, Query, UploadedFile, UseInterceptors } from '@nestjs/common';
 import { UserService } from './user.service';
 import { FileInterceptor } from '@nestjs/platform-express';
 
 import { CreateStudentDto } from './Dto/create-student.dto';
 import { CreateFacultyDto } from './Dto/create-faculty-staff.dto';
 import { CreateUserDto } from './Dto/create-user.dto';
+import { User } from './Entities/user.entity';
 
 
 @Controller('user')
@@ -32,8 +33,27 @@ export class UserController {
         return this.userService.createStaff(dto);
     }
 
+    //Handler for creating an admin
     @Post('admin/create-admin')
     async createAdmin (@Body() dto: CreateUserDto) {
         return this.userService.createAdmin(dto)
+    }
+
+    //Handler for getting all users
+    @Get()
+    async getAllUsers() {
+        return this.userService.getAllUsers();
+    }
+
+    //Handler for getting user by email, matric no & staff id
+    @Get('search')
+    async searchUsers(@Query('query') searchTerm: string): Promise<User[]> {
+        return this.userService.searchUsers(searchTerm)
+    }
+
+    //Handler for getting a user details by ID
+    @Get(':id')
+    async getUserById(@Param('id', ParseIntPipe) id: number): Promise<User> {
+        return this.userService.getUserById(id)
     }
 }

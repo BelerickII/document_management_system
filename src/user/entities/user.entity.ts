@@ -1,4 +1,4 @@
-import { Column, Entity, JoinColumn, OneToOne, PrimaryGeneratedColumn, TableInheritance } from "typeorm";
+import { Column, Entity, OneToOne, PrimaryGeneratedColumn, TableInheritance } from "typeorm";
 import { Student } from "./student.entity";
 import { FacultyStaff } from "./faculty-staff.entity";
 
@@ -40,10 +40,18 @@ export class User {
         type: "varchar",
         length: 100,
         nullable: false, 
+        select: false,
     })
     password: string;
 
-  @Column({
+    // @Column({
+    //     type: 'date',
+    //     nullable: false,
+    //     default: () => 'CURRENT_DATE'
+    // })
+    // createdAt: Date;
+
+    @Column({
         type: "boolean",
         nullable: false
     })
@@ -52,6 +60,7 @@ export class User {
     @Column({
         type: "boolean",
         nullable: false,
+        select: false,
     })
     mustResetPassword: boolean;
 
