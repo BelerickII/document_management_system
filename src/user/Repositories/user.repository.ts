@@ -46,17 +46,25 @@ export class userRepository extends Repository<User> {
     }
 
     //Logic to fetch all users in the system
-    async findAllUsers(): Promise<{ data: Partial<User>[]; total: number }> {
+    async findAllUsers(page = 1, limit =50): Promise<{ data: Partial<User>[]; total: number }> {
+        /* Basically I turned 'isNaN' => 'is not a number?' to 'is a number?' with '!isNaN'. So, this line
+        is asking, is 'page' a number? if yes, is it > 0 if true then assign 'parsedPage/..Limit' the number
+        page/limit holds. If false, assign the default i specify after the "?" */
+        const parsedPage = !isNaN(page) && page > 0 ? page: 1;
+        const parsedLimit = !isNaN(limit) && limit > 0 ? limit: 50;
+
         const [users, total] = await this.createQueryBuilder('user')
-            .select([
-                //don't forget to add the createdAt column later
+            .select([                
                 'user.id',
                 'user.firstName',
                 'user.lastName',
                 'user.email',
                 'user.isActive',
                 'user.role',
-            ]).getManyAndCount();
+                // 'user.createdAt'
+            ]).skip((parsedPage - 1) * parsedLimit)
+            .take(parsedLimit)
+            .getManyAndCount();
 
         return { data: users, total };
     }

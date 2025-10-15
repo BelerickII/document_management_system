@@ -262,8 +262,8 @@ export class UserService {
     }
 
     //------------GET REQUESTS----------//
-    async getAllUsers() {
-       return await this.userRepo.findAllUsers()
+    async getAllUsers(page: number, limit: number) {
+       return await this.userRepo.findAllUsers(page, limit)
     }
 
     async getUserById(id: number) {

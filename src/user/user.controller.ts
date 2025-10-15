@@ -39,16 +39,16 @@ export class UserController {
         return this.userService.createAdmin(dto)
     }
 
-    //Handler for getting all users
-    @Get()
-    async getAllUsers() {
-        return this.userService.getAllUsers();
-    }
-
     //Handler for getting user by email, matric no & staff id
     @Get('search')
     async searchUsers(@Query('query') searchTerm: string): Promise<User[]> {
         return this.userService.searchUsers(searchTerm)
+    }
+
+    //Handler for getting all users
+    @Get()
+    async getAllUsers(@Query('page') page = '1', @Query('limit') limit ='50') {
+        return this.userService.getAllUsers(+page, +limit);
     }
 
     //Handler for getting a user details by ID
