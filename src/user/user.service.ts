@@ -109,7 +109,7 @@ export class UserService {
 
     }
 
-    //*************Validation Section using the DTOs for each of the entities instance*************//
+    //------------Validation Section using the DTOs for each of the entities instance------------//
     
     /*Validates a DTO instance i.e a row from the CSV now a JS object; using class-validator
     Throws a BadRequestException if validation fails*/
@@ -262,8 +262,8 @@ export class UserService {
     }
 
     //------------GET REQUESTS----------//
-    async getAllUsers(page: number, limit: number) {
-       return await this.userRepo.findAllUsers(page, limit)
+    async getAllUsers(page: number, limit: number, role?: string) {
+       return await this.userRepo.findAllUsers(page, limit, role)
     }
 
     async getUserById(id: number) {

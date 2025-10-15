@@ -45,10 +45,10 @@ export class UserController {
         return this.userService.searchUsers(searchTerm)
     }
 
-    //Handler for getting all users
+    //Handler for getting all users & filtering by role
     @Get()
-    async getAllUsers(@Query('page') page = '1', @Query('limit') limit ='50') {
-        return this.userService.getAllUsers(+page, +limit);
+    async getAllUsers(@Query('page') page = '1', @Query('limit') limit ='50', @Query('role') role?: string) {
+        return this.userService.getAllUsers(+page, +limit, role);
     }
 
     //Handler for getting a user details by ID

@@ -45,15 +45,16 @@ export class userRepository extends Repository<User> {
         return savedUser;
     }
 
-    //Logic to fetch all users in the system
-    async findAllUsers(page = 1, limit =50): Promise<{ data: Partial<User>[]; total: number }> {
+    //Logic to fetch all users in the system; Pagination and Filtering Included
+    async findAllUsers(page = 1, limit = 50, role?: string): Promise<{ data: Partial<User>[]; total: number }> {
         /* Basically I turned 'isNaN' => 'is not a number?' to 'is a number?' with '!isNaN'. So, this line
         is asking, is 'page' a number? if yes, is it > 0 if true then assign 'parsedPage/..Limit' the number
         page/limit holds. If false, assign the default i specify after the "?" */
         const parsedPage = !isNaN(page) && page > 0 ? page: 1;
         const parsedLimit = !isNaN(limit) && limit > 0 ? limit: 50;
 
-        const [users, total] = await this.createQueryBuilder('user')
+        //returns an object array of all records (rows) and their specified attributes on the "user table"
+        const queryBuilder = this.createQueryBuilder('user')
             .select([                
                 'user.id',
                 'user.firstName',
@@ -64,7 +65,13 @@ export class userRepository extends Repository<User> {
                 // 'user.createdAt'
             ]).skip((parsedPage - 1) * parsedLimit)
             .take(parsedLimit)
-            .getManyAndCount();
+        
+        if (role) {
+            queryBuilder.where('user.role = :role', {role});
+        };
+
+        //Using destructuring assignment to assign all the elements i.e "objects" of the array and assign it to the variable users
+        const [users, total] = await queryBuilder.getManyAndCount();
 
         return { data: users, total };
     }
@@ -104,11 +111,5 @@ export class userRepository extends Repository<User> {
             .orWhere('staff.staffID ILIKE :likeSearchTerm', {likeSearchTerm})
             .getMany();
     }
-
-    async findByRole(role: UserRole) {
-        return this.find({
-            where: {role},
-            relations: ['student', 'staff'],
-        });
-    }
+    
 }
