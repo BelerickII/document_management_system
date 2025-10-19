@@ -62,8 +62,9 @@ export class userRepository extends Repository<User> {
                 'user.email',
                 'user.isActive',
                 'user.role',
-                // 'user.createdAt'
-            ]).skip((parsedPage - 1) * parsedLimit)
+                'user.createdAt'
+            ]).orderBy('user.createdAt', 'DESC')
+            .skip((parsedPage - 1) * parsedLimit)
             .take(parsedLimit)
         
         if (role) {

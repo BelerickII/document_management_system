@@ -72,9 +72,9 @@ export class User {
     role: UserRole;
     
     //It's optional to include this reverse relationship. If terminal throws error remove it.
-    @OneToOne(() => Student, (student) => student.user)
+    @OneToOne(() => Student, (student) => student.user, {cascade: true, onDelete: 'CASCADE'})
     student: Student;
 
-    @OneToOne(() => FacultyStaff, (staff) => staff.user)
+    @OneToOne(() => FacultyStaff, (staff) => staff.user, {cascade: true, onDelete: 'CASCADE'})
     staff: FacultyStaff;
 }
