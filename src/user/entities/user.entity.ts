@@ -44,12 +44,12 @@ export class User {
     })
     password: string;
 
-    // @Column({
-    //     type: 'date',
-    //     nullable: false,
-    //     default: () => 'CURRENT_DATE'
-    // })
-    // createdAt: Date;
+    @Column({
+        type: 'date',
+        nullable: false,
+        default: () => 'CURRENT_DATE'
+    })
+    createdAt: Date;
 
     @Column({
         type: "boolean",

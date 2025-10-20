@@ -6,7 +6,7 @@ export class FacultyStaff {
     @PrimaryGeneratedColumn()    
     declare id: number;
     
-    @OneToOne(() => User, (user) => user.staff, {cascade: true, onDelete: 'CASCADE'})
+    @OneToOne(() => User, (user) => user.staff)
     @JoinColumn()
     user: User;
 

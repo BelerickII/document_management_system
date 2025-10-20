@@ -19,6 +19,6 @@ export class DocsRequirement {
     })
     isActive: boolean;
 
-    @OneToMany(() => DocumentMapsCategory, (docsMapCategory) => docsMapCategory.docs)
+    @OneToMany(() => DocumentMapsCategory, (docsMapCategory) => docsMapCategory.docs, {cascade: true, onDelete: 'CASCADE'})
     docsMapCategory: DocumentMapsCategory[];
 }
