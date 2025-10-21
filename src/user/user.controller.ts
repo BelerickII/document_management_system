@@ -12,7 +12,7 @@ import { User } from './Entities/user.entity';
 export class UserController {
     constructor (private readonly userService: UserService) {}
 
-    //--------------- Admin Endpoints ----------------
+    //--------------- Admin Endpoints ----------------//
 
     //Handler for the upload CSV of students
     @Post('admin/student-csv')
@@ -56,4 +56,7 @@ export class UserController {
     async getUserById(@Param('id', ParseIntPipe) id: number): Promise<User> {
         return this.userService.getUserById(id)
     }
+
+    //-------------Students Endpoints-------------//
+    
 }

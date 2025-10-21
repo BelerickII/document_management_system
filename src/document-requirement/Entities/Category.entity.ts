@@ -16,6 +16,7 @@ export class Category {
         nullable: false,
         type: 'enum',
         enum: UserCategory,
+        default:UserCategory.FRESHER,
     })
     name: UserCategory;
 

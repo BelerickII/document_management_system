@@ -11,10 +11,12 @@ import { studentRepository } from './Repositories/student.repository';
 import { User } from './Entities/user.entity';
 import { FacultyStaff } from './Entities/faculty-staff.entity';
 import { Student } from './Entities/student.entity';
+import { DocumentRequirementModule } from 'src/document-requirement/document-requirement.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([User, FacultyStaff, Student]),
+    DocumentRequirementModule,
 
   ],
   controllers: [UserController],

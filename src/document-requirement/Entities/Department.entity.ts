@@ -11,7 +11,7 @@ export class StudentDepartment {
         enum: Department,
         nullable: false,
     })
-    name: Department;
+    department: Department;
 
     @Column({
         type: 'int',        
