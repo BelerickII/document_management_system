@@ -1,5 +1,5 @@
-import { Department } from "src/user/Entities/student.entity";
-import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
+import { Department, Student } from "src/user/Entities/student.entity";
+import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity()
 export class StudentDepartment {
@@ -18,4 +18,7 @@ export class StudentDepartment {
         nullable: false,
     })
     max_level: number;
+
+    @OneToMany(() => Student, student => student.dept)
+    student: Student[];
 }

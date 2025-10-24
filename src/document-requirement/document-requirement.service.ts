@@ -51,11 +51,13 @@ export class DocumentRequirementService {
     async addDepartment(dto: createDepartmentDto): Promise<StudentDepartment> {
         try {
             for (const key in dto) {
-                if(typeof key === 'string') dto[key] = dto[key].trim();
+                if(typeof dto[key] === 'string') {
+                    dto[key] = dto[key].trim();
+                } 
             }
 
             const existing = await this.studentDepartmentRepo.findOne({
-                where: {name: dto.department},
+                where: {department: dto.department},
             });
 
             if (existing) {
@@ -63,7 +65,7 @@ export class DocumentRequirementService {
             }
 
             const department = this.studentDepartmentRepo.create({
-                name: dto.department,
+                department: dto.department,
                 max_level: dto.max_level,
             });
 
@@ -78,7 +80,7 @@ export class DocumentRequirementService {
     async addCategory(dto: createCategoryDto): Promise<Category> {
         try {
             for (const key in dto) {
-               if(typeof key === 'string') dto[key] = dto[key].trim(); 
+               if(typeof dto[key] === 'string') dto[key] = dto[key].trim(); 
             }
 
             const existing = await this.categoryRepo.findOne({
@@ -104,7 +106,9 @@ export class DocumentRequirementService {
     async mapDocToCat(dto: createDocMapsCategoryDto) {
         try {
             for (const key in dto) {
-               if(typeof key === 'string') dto[key] = dto[key].trim(); 
+               if(typeof dto[key] === 'string') {
+                    dto[key] = dto[key].trim();
+                }                
             }
 
             const existing = await this.docMapsCategoryRepo.findOne({
@@ -112,7 +116,7 @@ export class DocumentRequirementService {
             });
 
             if (existing) {
-                throw new BadRequestException(`${dto.docsId} & ${dto.categoryId} already exists`);
+                throw new BadRequestException(`${dto.docsId} & ${dto.categoryId} already exists, check the Document Maps Category table`);
             }
 
             const map = await this.docMapsCategoryRepo.create({
@@ -125,5 +129,13 @@ export class DocumentRequirementService {
         } catch (error) {
             throw new BadRequestException(error.message || 'Duplicate IDs; Check Carefully')
         }
+    }
+
+    /*Logic to supply a student documents for faculty registration based on determined category*/
+    async getRequiredDocsByCategory (categoryId: number) {
+        return this.docMapsCategoryRepo.find({
+            where: { categoryId },
+            relations: ['docs'],
+        });
     }
 }

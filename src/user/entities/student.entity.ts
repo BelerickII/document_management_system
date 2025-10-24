@@ -1,5 +1,6 @@
-import { Column, Entity, JoinColumn, OneToOne, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, JoinColumn, ManyToOne, OneToOne, PrimaryGeneratedColumn } from "typeorm";
 import { User } from "./user.entity";
+import { StudentDepartment } from "src/document-requirement/Entities/Department.entity";
 
 export enum ModeOfEntry {
     UTME = 'Utme',
@@ -22,6 +23,10 @@ export class Student {
     @OneToOne(() => User, (user) => user.student)
     @JoinColumn()
     user: User;
+
+    @ManyToOne(() => StudentDepartment, dept => dept.student, {nullable: false})
+    @JoinColumn()
+    dept: StudentDepartment;
 
     @Column({
         type: "varchar",        
@@ -54,5 +59,17 @@ export class Student {
         type: "boolean",
         nullable: false
     })
-    graduated: boolean;    
+    graduated: boolean;
+    
+    @Column({
+        nullable: true,
+        type: 'int'
+    })
+    categoryId?: number;
+
+    @Column({
+        type: 'varchar',
+        nullable: true,
+    })
+    academicSession?: string;
 }
