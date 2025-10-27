@@ -2,9 +2,9 @@ import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 import { DocumentMapsCategory } from "./DocMapsCat.entity";
 
 export enum UserCategory{
-    FRESHER = 'Fresher',
-    RETURNING = 'Returning',
-    FINALIST = 'Finalist',
+    FRESHER = 'fresher',
+    RETURNING = 'returning',
+    FINALIST = 'finalist',
 }
 
 @Entity()

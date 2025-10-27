@@ -1,7 +1,7 @@
 import { IsEnum, IsInt, IsNotEmpty, IsString } from "class-validator";
 import { UserCategory } from "../Entities/Category.entity";
-import { Department } from "src/user/Entities/student.entity";
 import { Type } from "class-transformer";
+import { Department } from "src/user/Entities/enum";
 
 export class createDocsRequirementDto {
     @IsNotEmpty()

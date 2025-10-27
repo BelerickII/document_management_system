@@ -1,7 +1,8 @@
 import { UserRole } from "../Entities/user.entity";
 import { IsEnum, IsNotEmpty, IsEmail, IsString, IsNumberString, IsInt } from 'class-validator';
-import { Department, ModeOfEntry } from '../Entities/student.entity';
+import { ModeOfEntry } from '../Entities/student.entity';
 import { Type } from "class-transformer";
+import { Department } from "../Entities/enum";
 
 export class CreateStudentDto {
     @IsNotEmpty()

@@ -1,4 +1,5 @@
-import { Department, Student } from "src/user/Entities/student.entity";
+import { Department } from "src/user/Entities/enum";
+import { Student } from "src/user/Entities/student.entity";
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity()

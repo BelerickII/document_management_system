@@ -1,18 +1,12 @@
 import { Column, Entity, JoinColumn, ManyToOne, OneToOne, PrimaryGeneratedColumn } from "typeorm";
 import { User } from "./user.entity";
 import { StudentDepartment } from "src/document-requirement/Entities/Department.entity";
+import { Department } from "./enum";
 
 export enum ModeOfEntry {
     UTME = 'Utme',
     TRANSFER = 'Transfer',
     DIRECT_ENTRY = 'Direct Entry',
-}
-
-export enum Department {
-    COMPUTER_SCIENCE = "Computer Science",
-    SOFTWARE_ENGINEERING = "Software Engineering",
-    DATA_SCIENCE = "Data Science",
-    CYBERSECURITY = "Cybersecurity",
 }
 
 @Entity()

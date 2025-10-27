@@ -70,14 +70,14 @@ export class studentRepository extends Repository<Student> {
         let categoryName: string;
 
         if((level === 100 && modeofentry === 'Utme') || (level === 200 && ['Direct Entry', 'Transfer'].includes(modeofentry))){
-            categoryName = 'Fresher';
+            categoryName = 'fresher';
         } else if (level === maxLevel){
-            categoryName = 'Finalist';
+            categoryName = 'finalist';
         } else {
-            categoryName = 'Returning';
+            categoryName = 'returning';
         }
 
-        //the logic gets teh category name from the Category entity in the Document Module
+        //the logic gets the category name from the Category entity in the Document Module
         return this.categoryRepo.findOne({where: {name: categoryName as UserCategory}})
     }
 }

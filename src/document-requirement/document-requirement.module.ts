@@ -14,6 +14,6 @@ import { StudentDepartment } from './Entities/Department.entity';
     ],
   controllers: [DocumentRequirementController],
   providers: [DocumentRequirementService],
-  exports: [DocumentRequirementService],
+  exports: [DocumentRequirementService, TypeOrmModule],
 })
 export class DocumentRequirementModule {}
