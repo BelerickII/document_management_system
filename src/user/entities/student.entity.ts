@@ -20,7 +20,7 @@ export class Student {
     @JoinColumn()
     user: User;
 
-    @ManyToOne(() => StudentDepartment, dept => dept.student, {nullable: false})
+    @ManyToOne(() => StudentDepartment, dept => dept.student)
     @JoinColumn()
     dept: StudentDepartment;
 

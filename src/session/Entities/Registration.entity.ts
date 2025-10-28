@@ -1,7 +1,7 @@
 import { Student } from "src/user/Entities/student.entity";
 import { academicSession } from "./Academic-Session.entity";
 import { documentUploads } from "./Student-Uploads.entity";
-import { Column, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn, Unique } from "typeorm";
+import { Column, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn, Unique } from "typeorm";
 
 export enum Status{
     PENDING = 'Pending',
@@ -10,16 +10,10 @@ export enum Status{
 }
 
 @Entity('registration')
-@Unique(['studentID', 'sessionID'])
+@Unique(['student', 'acadSession'])
 export class registeredStudent {
     @PrimaryGeneratedColumn()
     id: number;
-
-    @ManyToOne(() => Student, (studentID) => studentID.registration)
-    studentID: number;
-    
-    @ManyToOne(() => academicSession, (sessionID) => sessionID.registration)
-    sessionID: number;
 
     @Column({
         type: 'enum',

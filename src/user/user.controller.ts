@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, ParseIntPipe, Post, Query, UploadedFile, UseInterceptors } from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseIntPipe, Post, Query, UploadedFile, UseInterceptors, UsePipes, ValidationPipe } from '@nestjs/common';
 import { UserService } from './user.service';
 import { FileInterceptor } from '@nestjs/platform-express';
 
@@ -23,18 +23,21 @@ export class UserController {
 
     //Handler for creating a single student
     @Post('admin/create-student')
+    @UsePipes(ValidationPipe)
     async createStudent(@Body() dto: CreateStudentDto) {
         return this.userService.createSingleStudent(dto);
     }
 
     //Handler for creating a staff
     @Post('admin/create-staff')
+    @UsePipes(ValidationPipe)
     async createStaff(@Body() dto: CreateFacultyDto) {
         return this.userService.createStaff(dto);
     }
 
     //Handler for creating an admin
     @Post('admin/create-admin')
+    @UsePipes(ValidationPipe)
     async createAdmin (@Body() dto: CreateUserDto) {
         return this.userService.createAdmin(dto)
     }

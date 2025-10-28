@@ -6,7 +6,7 @@ import { DocsRequirement } from "src/document-requirement/Entities/docsRequiemen
 
 export enum Status {
     PENDING = 'Pending',
-    ACCEPTED = 'Accepted',
+    APPROVED = 'Approved',
     REJECTED = 'Rejected'
 }
 
@@ -15,6 +15,18 @@ export class documentUploads {
     @PrimaryGeneratedColumn()
     id: number;
     
+    @Column({
+        type: 'varchar',
+        nullable: false
+    })
+    documentType: string;
+
+    @Column({
+        type: 'varchar',
+        length: 50,
+    })
+    filePath: string;
+
     @Column({
         type: 'enum',
         enum: Status,

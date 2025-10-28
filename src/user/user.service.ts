@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
+import { BadRequestException, Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
 
 import { User } from './Entities/user.entity';
 import { Student } from './Entities/student.entity';
@@ -16,6 +16,9 @@ import { plainToInstance } from 'class-transformer';
 import { userRepository } from './Repositories/user.repository';
 import { studentRepository } from './Repositories/student.repository';
 import { staffRepository } from './Repositories/faculty-staff.repository';
+import { InjectRepository } from '@nestjs/typeorm';
+import { StudentDepartment } from 'src/document-requirement/Entities/Department.entity';
+import { Repository } from 'typeorm';
 
 
 @Injectable()
@@ -23,7 +26,8 @@ export class UserService {
     constructor (
         private readonly userRepo: userRepository,
         private readonly studentRepo: studentRepository,
-        private readonly staffRepo: staffRepository
+        private readonly staffRepo: staffRepository,
+        @InjectRepository(StudentDepartment) private readonly studentDepartmentRepo: Repository<StudentDepartment>,
     ) {}
     
     private readonly logger = new Logger('UserService');
@@ -108,8 +112,6 @@ export class UserService {
         });
 
     }
-
-    //------------Validation Section using the DTOs for each of the entities instance------------//
     
     /*Validates a DTO instance i.e a row from the CSV now a JS object; using class-validator
     Throws a BadRequestException if validation fails*/
@@ -124,31 +126,9 @@ export class UserService {
         }
     }
 
-    private async validateDtoStaff(dto: CreateFacultyDto, rowNumber: number): Promise<void> {
-        const dtoInstance = plainToInstance(CreateFacultyDto, dto);
-        const validationErrors = await validate(dtoInstance);
-
-        if (validationErrors.length > 0) {
-            const messages = validationErrors
-                .flatMap((ve) => Object.values(ve.constraints ?? {}).map((m) => `${ve.property}: ${m}`),).join('; ');
-                throw new BadRequestException(`Row ${rowNumber} validation failed: ${messages}`)
-        }
-    }
-
-    private async validateDtoAdmin(dto: CreateUserDto, rowNumber: number): Promise<void> {
-        const dtoInstance = plainToInstance(CreateUserDto, dto);
-        const validationErrors = await validate(dtoInstance);
-
-        if (validationErrors.length > 0) {
-            const messages = validationErrors
-                .flatMap((ve) => Object.values(ve.constraints ?? {}).map((m) => `${ve.property}: ${m}`),).join('; ');
-                throw new BadRequestException(`Row ${rowNumber} validation failed: ${messages}`)
-        }
-    }
-
     //Injecting the custom repo for user inside this service module
     async createUser(dto: CreateUserDto): Promise<User> {
-        return this.userRepo.createUser(dto);
+        return await this.userRepo.createUser(dto);
     }
 
     //------------POST REQUESTS--------------//
@@ -157,6 +137,10 @@ export class UserService {
     async createStudentWithUser(dto: CreateStudentDto): Promise<Student> {
        const user = await this.createUser(dto);
 
+       //this determines the ID of the department the student belongs to by using the student department
+       const dept = await this.studentDepartmentRepo.findOneBy({ department: dto.department })
+       if (!dept) {throw new NotFoundException('Department not found')};
+
         //Create linked student record in DB
         const student = this.studentRepo.create({
             user,
@@ -164,7 +148,8 @@ export class UserService {
             department: dto.department,
             mode_of_entry: dto.mode_of_entry,
             level: dto.level,
-            graduated: false            
+            graduated: false,
+            dept  
         } as Partial<Student>);
 
         return await this.studentRepo.save(student);
@@ -188,7 +173,7 @@ export class UserService {
             }
 
             //validate incoming DTO manually
-            await this.validateDtoStudent(dto, 1);
+            // await this.validateDtoStudent(dto, 1);
 
             //create user + student record using the existing method above
             const student = await this.createStudentWithUser(dto);
@@ -222,7 +207,7 @@ export class UserService {
             }
 
             //validate incoming DTO manually
-            await this.validateDtoStaff(dto, 1);
+            // await this.validateDtoStaff(dto, 1);
 
             const user = await this.createUser(dto);
 
@@ -249,7 +234,7 @@ export class UserService {
             }
 
             //validate incoming DTO manually
-            await this.validateDtoAdmin(dto, 1);
+            // await this.validateDtoAdmin(dto, 1);
 
             const admin = await this.createUser(dto);
 
@@ -262,6 +247,7 @@ export class UserService {
     }
 
     //------------GET REQUESTS----------//
+    //Admin aspect
     async getAllUsers(page: number, limit: number, role?: string) {
        return await this.userRepo.findAllUsers(page, limit, role)
     }
@@ -274,7 +260,9 @@ export class UserService {
         return await this.userRepo.findUsers(searchTerm)
     }
 
-
-    //*************Student Business Logic*************//
+    //Student aspect
+    async onStudentLog(userId: number, currentSession: string) {
+        return await this.studentRepo.studentLogin(userId, currentSession)
+    }
 
 }
