@@ -1,7 +1,9 @@
-import { Column, Entity, JoinColumn, ManyToOne, OneToOne, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, JoinColumn, ManyToOne, OneToMany, OneToOne, PrimaryGeneratedColumn } from "typeorm";
 import { User } from "./user.entity";
 import { StudentDepartment } from "src/document-requirement/Entities/Department.entity";
 import { Department } from "./enum";
+import { registeredStudent } from "src/session/Entities/Registration.entity";
+import { documentUploads } from "src/session/Entities/Student-Uploads.entity";
 
 export enum ModeOfEntry {
     UTME = 'Utme',
@@ -21,6 +23,12 @@ export class Student {
     @ManyToOne(() => StudentDepartment, dept => dept.student, {nullable: false})
     @JoinColumn()
     dept: StudentDepartment;
+
+    @OneToMany(() => registeredStudent, (registration) => registration.student)
+    registration: registeredStudent[];
+
+    @OneToMany(() => documentUploads, (docUpload) => docUpload.student)
+    docUpload: documentUploads[];
 
     @Column({
         type: "varchar",        

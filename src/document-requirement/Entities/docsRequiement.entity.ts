@@ -1,5 +1,6 @@
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 import { DocumentMapsCategory } from "./DocMapsCat.entity";
+import { documentUploads } from "src/session/Entities/Student-Uploads.entity";
 
 @Entity()
 export class DocsRequirement {
@@ -21,4 +22,7 @@ export class DocsRequirement {
 
     @OneToMany(() => DocumentMapsCategory, (docsMapCategory) => docsMapCategory.docs, {cascade: true, onDelete: 'CASCADE'})
     docsMapCategory: DocumentMapsCategory[];
+
+    @OneToMany(() => documentUploads, (document) => document.docReq)
+    document: documentUploads[];
 }

@@ -1,5 +1,6 @@
-import { Column, Entity, JoinColumn, OneToOne, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, JoinColumn, OneToMany, OneToOne, PrimaryGeneratedColumn } from "typeorm";
 import { User } from "./user.entity";
+import { documentUploads } from "src/session/Entities/Student-Uploads.entity";
 
 @Entity()
 export class FacultyStaff {
@@ -9,6 +10,9 @@ export class FacultyStaff {
     @OneToOne(() => User, (user) => user.staff)
     @JoinColumn()
     user: User;
+
+    @OneToMany(() => documentUploads, (document) => document.staff)
+    document: documentUploads;
 
     @Column({
         type: "varchar",        
