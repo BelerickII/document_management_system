@@ -1,3 +1,5 @@
+import { Repository } from 'typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
 import { BadRequestException, Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
 
 import { User } from './Entities/user.entity';
@@ -16,9 +18,7 @@ import { plainToInstance } from 'class-transformer';
 import { userRepository } from './Repositories/user.repository';
 import { studentRepository } from './Repositories/student.repository';
 import { staffRepository } from './Repositories/faculty-staff.repository';
-import { InjectRepository } from '@nestjs/typeorm';
 import { StudentDepartment } from 'src/document-requirement/Entities/Department.entity';
-import { Repository } from 'typeorm';
 
 
 @Injectable()

@@ -21,7 +21,7 @@ import { DocumentRequirementModule } from 'src/document-requirement/document-req
   ],
   controllers: [UserController],
   providers: [userRepository, staffRepository, studentRepository, UserService],
-  exports: [userRepository, staffRepository, studentRepository]
+  exports: [TypeOrmModule, ]
 })
 
 export class UserModule {}

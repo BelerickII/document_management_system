@@ -43,11 +43,10 @@ export class documentUploads {
     uploadDate: Date;
 
     @Column({
-        type: 'date',
-        nullable: false,
+        type: 'date',        
         default: () => 'CURRENT_DATE'
     })
-    reviewDate: Date;
+    reviewDate?: Date;
 
     @Column({
         type: 'varchar',

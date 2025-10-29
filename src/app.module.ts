@@ -4,6 +4,7 @@ import { typeOrmConfig } from './Configuration/typeORM.config';
 import { UserModule } from './user/user.module';
 import { DocumentRequirementModule } from './document-requirement/document-requirement.module';
 import { SessionModule } from './session/session.module';
+import { AuthModule } from './auth/auth.module';
 
 
 @Module({
@@ -12,6 +13,7 @@ import { SessionModule } from './session/session.module';
     TypeOrmModule.forRoot(typeOrmConfig),
     DocumentRequirementModule,
     SessionModule,
+    AuthModule,
   ],  
 })
 export class AppModule {}
