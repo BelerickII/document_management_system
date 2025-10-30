@@ -65,6 +65,13 @@ export class User {
     mustResetPassword: boolean;
 
     @Column({
+        type: 'date',
+        nullable: false,
+        default: () => 'CURRENT_DATE'
+    })
+    lastPasswordReset: Date;
+
+    @Column({
         type: "enum",
         enum: UserRole,
         default: UserRole.ADMIN,

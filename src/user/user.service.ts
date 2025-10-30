@@ -126,7 +126,7 @@ export class UserService {
         }
     }
 
-    //Injecting the custom repo for user inside this service module
+    //Injecting the custom repo for creating a user inside this service module
     async createUser(dto: CreateUserDto): Promise<User> {
         return await this.userRepo.createUser(dto);
     }
@@ -265,4 +265,37 @@ export class UserService {
         return await this.studentRepo.studentLogin(userId, currentSession)
     }
 
+    //helper for the authModule to find user by email, matric no or staff Id
+    async findByUsername(username: string) {
+        // 1️⃣ Try by email
+        let user = await this.userRepo.findOne({
+            where: {email: username}            
+        });
+        if (user) return user;
+
+        // 2️⃣ Try by matric number (Student)
+        user = await this.userRepo.createQueryBuilder('user')
+            .leftJoinAndSelect('user.student', 'student')
+            .where('student.matric_no = :matric_no', {matric_no: username})
+            .getOne()
+        if (user) return user;
+
+        // 3️⃣ Try by staff ID (Staff)
+        user = await this.userRepo.createQueryBuilder('user')
+            .leftJoinAndSelect('user.staff', 'staff')
+            .where('staff.staffID = :staffID', {staffID: username})
+            .getOne();
+        if (user) return user;
+    }
+
+    //method to get the user id from the Temp JWT token the user gets on first login
+    async findById(id: number) {
+        return this.userRepo.findOne({where: {id}})
+    }
+
+    //method to help update a user record on the DB after password reset
+    async updateUser(user: User) {
+        return await this.userRepo.save(user);
+    }
+ 
 }
