@@ -69,7 +69,7 @@ export class User {
         nullable: false,
         default: () => 'CURRENT_DATE'
     })
-    lastPasswordReset: Date;
+    lastPasswordReset?: Date;
 
     @Column({
         type: "enum",
