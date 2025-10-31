@@ -65,9 +65,9 @@ export class User {
     mustResetPassword: boolean;
 
     @Column({
-        type: 'date',
-        nullable: false,
-        default: () => 'CURRENT_DATE'
+        type: 'timestamp',        
+        default: () => 'CURRENT_TIMESTAMP',
+        onUpdate: 'CURRENT_TIMESTAMP'
     })
     lastPasswordReset?: Date;
 

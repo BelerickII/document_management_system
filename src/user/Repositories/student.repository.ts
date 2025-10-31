@@ -1,8 +1,8 @@
 import { DataSource, Repository } from 'typeorm';
-import { Student } from '../Entities/student.entity';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 
+import { Student } from '../Entities/student.entity';
 import { DocumentRequirementService } from '../../document-requirement/document-requirement.service';
 import { Category, UserCategory } from 'src/document-requirement/Entities/Category.entity';
 import { StudentDepartment } from 'src/document-requirement/Entities/Department.entity';
@@ -80,4 +80,6 @@ export class studentRepository extends Repository<Student> {
         //the logic gets the category name from the Category entity in the Document Module
         return this.categoryRepo.findOne({where: {name: categoryName as UserCategory}})
     }
+
+    //
 }

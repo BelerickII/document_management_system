@@ -17,11 +17,10 @@ import { DocumentRequirementModule } from 'src/document-requirement/document-req
   imports: [
     TypeOrmModule.forFeature([User, FacultyStaff, Student]),
     DocumentRequirementModule,
-
   ],
   controllers: [UserController],
   providers: [userRepository, staffRepository, studentRepository, UserService],
-  exports: [TypeOrmModule, ]
+  exports: [UserService, TypeOrmModule]
 })
 
 export class UserModule {}
