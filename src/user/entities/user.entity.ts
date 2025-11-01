@@ -39,8 +39,7 @@ export class User {
     @Column({
         type: "varchar",
         length: 100,
-        nullable: false, 
-        select: false,
+        nullable: false,        
     })
     password: string;
 
@@ -59,8 +58,7 @@ export class User {
 
     @Column({
         type: "boolean",
-        nullable: false,
-        select: false,
+        nullable: false,        
     })
     mustResetPassword: boolean;
 
