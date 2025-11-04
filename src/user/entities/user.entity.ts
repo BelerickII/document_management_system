@@ -39,7 +39,8 @@ export class User {
     @Column({
         type: "varchar",
         length: 100,
-        nullable: false,        
+        nullable: false,
+        select: false,
     })
     password: string;
 
@@ -58,14 +59,16 @@ export class User {
 
     @Column({
         type: "boolean",
-        nullable: false,        
+        nullable: false,
+        select: false,
     })
     mustResetPassword: boolean;
 
     @Column({
         type: 'timestamp',        
         default: () => 'CURRENT_TIMESTAMP',
-        onUpdate: 'CURRENT_TIMESTAMP'
+        onUpdate: 'CURRENT_TIMESTAMP',
+        select: false,
     })
     lastPasswordReset?: Date;
 

@@ -268,13 +268,19 @@ export class UserService {
     //helper for the authModule to find user by email, matric no or staff Id
     async findByUsername(username: string) {
         // 1️⃣ Try by email
-        let user = await this.userRepo.findOne({
-            where: {email: username}            
-        });
+        let user = await this.userRepo.createQueryBuilder('user')
+            .addSelect('user.password')
+            .addSelect('user.mustResetPassword')
+            .addSelect('user.lastPasswordReset')
+            .where('user.email = :email', {email: username})
+            .getOne();
         if (user) return user;
 
         // 2️⃣ Try by matric number (Student)
         user = await this.userRepo.createQueryBuilder('user')
+            .addSelect('user.password')
+            .addSelect('user.mustResetPassword')
+            .addSelect('user.lastPasswordReset')
             .leftJoinAndSelect('user.student', 'student')
             .where('student.matric_no = :matric_no', {matric_no: username})
             .getOne()
@@ -282,6 +288,9 @@ export class UserService {
 
         // 3️⃣ Try by staff ID (Staff)
         user = await this.userRepo.createQueryBuilder('user')
+            .addSelect('user.password')
+            .addSelect('user.mustResetPassword')
+            .addSelect('user.lastPasswordReset')
             .leftJoinAndSelect('user.staff', 'staff')
             .where('staff.staffID = :staffID', {staffID: username})
             .getOne();
@@ -295,7 +304,7 @@ export class UserService {
 
     //method to help update a user record on the DB after password reset
     async updateUser(user: User) {
-        return await this.userRepo.save(user);
+        return this.userRepo.save(user);
     }
  
 }
