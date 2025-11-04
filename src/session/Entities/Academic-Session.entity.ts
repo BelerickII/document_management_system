@@ -29,7 +29,8 @@ export class academicSession {
     @Column({
         type: 'date',
         nullable: false,
-        default: () => 'CURRENT_DATE'
+        default: () => 'CURRENT_DATE',
+        onUpdate: 'CURRENT_DATE'
     })
     endDate: Date;
 

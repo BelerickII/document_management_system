@@ -1,5 +1,5 @@
 import { DataSource, Repository } from "typeorm";
-import { User, UserRole } from '../Entities/user.entity';
+import { User } from '../Entities/user.entity';
 import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
 import * as bcrypt from 'bcrypt';
 

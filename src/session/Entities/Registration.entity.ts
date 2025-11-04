@@ -25,10 +25,11 @@ export class registeredStudent {
 
     @Column({
         type: 'date',
-        nullable: false,
-        default: () => 'CURRENT_DATE'
+        nullable: true,
+        // default: () => 'CURRENT_DATE',
+        onUpdate: 'CURRENT_DATE'
     })
-    dateRegistered: Date;
+    dateRegistered: Date | null;
 
     @ManyToOne(() => academicSession, (acadSession) => acadSession.registration)    
     acadSession: academicSession;
