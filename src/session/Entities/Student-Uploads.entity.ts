@@ -1,5 +1,5 @@
+import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
 import { Student } from "src/user/Entities/student.entity";
-import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
 import { registeredStudent } from "./Registration.entity";
 import { FacultyStaff } from "src/user/Entities/faculty-staff.entity";
 import { DocsRequirement } from "src/document-requirement/Entities/docsRequiement.entity";
@@ -23,7 +23,8 @@ export class documentUploads {
 
     @Column({
         type: 'varchar',
-        length: 50,
+        nullable: false,
+        length: 250,
     })
     filePath: string;
 
@@ -44,13 +45,16 @@ export class documentUploads {
 
     @Column({
         type: 'date',        
-        default: () => 'CURRENT_DATE'
+        // default: () => 'CURRENT_DATE',
+        nullable: true,
+        onUpdate: 'CURRENT_DATE'
     })
     reviewDate?: Date;
 
     @Column({
         type: 'varchar',
         length: 400,
+        nullable: true,
     })
     Comment?: string;
 

@@ -13,7 +13,7 @@ export class studentRepository extends Repository<Student> {
         @InjectRepository(StudentDepartment) private readonly studentDepartmentRepo: Repository<StudentDepartment>,
         @InjectRepository(Category) private readonly categoryRepo: Repository<Category>,
         private readonly docReqService: DocumentRequirementService,
-        private readonly dataSource: DataSource, 
+        readonly dataSource: DataSource, 
     ) {
         super(Student, dataSource.createEntityManager());
     }
@@ -81,5 +81,4 @@ export class studentRepository extends Repository<Student> {
         return this.categoryRepo.findOne({where: {name: categoryName as UserCategory}})
     }
 
-    //
 }

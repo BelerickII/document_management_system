@@ -8,9 +8,15 @@ import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { LocalStrategy } from './strategies/local.strategy';
 import { JwtStrategy } from './strategies/jwt.strategy';
+import { studentRepository } from 'src/user/Repositories/student.repository';
+import { SessionModule } from 'src/session/session.module';
+import { DocumentRequirementModule } from 'src/document-requirement/document-requirement.module';
 
 @Module({
   imports: [
+    SessionModule,
+    DocumentRequirementModule,
+    UserModule,
     ConfigModule.forRoot({ isGlobal: true }),
     PassportModule.register({ defaultStrategy: 'jwt'}),
     JwtModule.registerAsync({
@@ -21,10 +27,9 @@ import { JwtStrategy } from './strategies/jwt.strategy';
         signOptions: { expiresIn: config.get<string>('JWT_EXPIRES_IN', '1h') as any },
       }),
     }),
-    UserModule,
   ],
   controllers: [AuthController],
-  providers: [AuthService, LocalStrategy, JwtStrategy, ],
+  providers: [AuthService, LocalStrategy, JwtStrategy, studentRepository],
   exports: [AuthService],
 })
 export class AuthModule {}

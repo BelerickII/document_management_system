@@ -1,15 +1,21 @@
 import { ForbiddenException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { UserService } from 'src/user/user.service';
 import { User } from 'src/user/Entities/user.entity';
+import { academicSession } from 'src/session/Entities/Academic-Session.entity';
 
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
+import { Repository } from 'typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
+import { studentRepository } from 'src/user/Repositories/student.repository';
 
 @Injectable()
 export class AuthService {
     constructor(
         private readonly userservice: UserService,
         private readonly jwtService: JwtService,
+        private readonly studentRepo: studentRepository,
+        @InjectRepository(academicSession) private readonly acadSession: Repository<academicSession>,
     ) {}
 
     //Logic to validate a user login credentials (username & password)
@@ -37,8 +43,20 @@ export class AuthService {
 
         //if user has reset their password before do this 👇🏽
         const payload = { sub: user.id, role: user.role};
+        const access_token = await this.jwtService.signAsync(payload);
+
+        //Logic for student
+        if( user.role === 'student') {
+            const currentSession = await this.currentSession();
+            const studentData = await this.studentRepo.studentLogin(user.id, currentSession);
+
+            //remove the user later, the frontend doesn't need it
+            return { access_token, user, studentData}
+        }
+
+        //For Admins
         return {
-            access_token: this.jwtService.sign(payload),            
+            access_token            
         };
     }
 
@@ -54,5 +72,18 @@ export class AuthService {
         user.lastPasswordReset = new Date();
         await this.userservice.updateUser(user);
         return { message: 'Password reset successful. You can now log in.' };
+    }
+
+    //Logic to help get the current session
+    async currentSession(): Promise<string> {
+        const atvSession = await this.acadSession.findOne({
+            where: {isActive: true},
+        });
+
+        if(!atvSession){
+            throw new UnauthorizedException('No active academic session found.')
+        }
+
+        return atvSession.sessionId;
     }
 }
