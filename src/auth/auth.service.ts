@@ -48,10 +48,8 @@ export class AuthService {
         //Logic for student
         if( user.role === 'student') {
             const currentSession = await this.currentSession();
-            const studentData = await this.studentRepo.studentLogin(user.id, currentSession);
-
-            //remove the user later, the frontend doesn't need it
-            return { access_token, user, studentData}
+            const studentData = await this.studentRepo.studentLogin(user.id, currentSession);            
+            return { access_token, studentData}
         }
 
         //For Admins

@@ -1,4 +1,41 @@
-import { Controller } from '@nestjs/common';
+import { Body, Controller, Post, UploadedFile, UseInterceptors, UsePipes, ValidationPipe } from '@nestjs/common';
+import { SessionService } from './session.service';
+import { academicSessionDto, uploadDocDto } from './Dto/create-session.dto';
+
+import { extname } from 'path';
+import { diskStorage } from 'multer';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 @Controller('session')
-export class SessionController {}
+export class SessionController {
+    constructor (private readonly sessionService: SessionService) {}
+
+    @Post('create-session')
+    @UsePipes(ValidationPipe)
+    async createSession(@Body() dto: academicSessionDto) {
+        return this.sessionService.newSession(dto);
+    }
+
+    @Post('end-session')
+    async endSession() {
+        return this.sessionService.purgeSession()
+    }
+
+    @Post('student/uploads')
+    @UsePipes(ValidationPipe)
+    @UseInterceptors(
+        FileInterceptor('file', {
+            storage: diskStorage({
+                destination: './uploads',
+                filename: (req, file, callback) => {
+                    const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
+                    const ext = extname(file.originalname);
+                    callback(null, `${file.filename}-${uniqueSuffix}${ext}`);
+                },
+            }),
+        }),
+    )
+    async uploadDoc(@UploadedFile() file: Express.Multer.File, @Body() dto: uploadDocDto) {
+        return this.sessionService.docUpload(file, dto);
+    }
+}
