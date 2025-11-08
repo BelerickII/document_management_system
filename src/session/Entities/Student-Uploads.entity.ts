@@ -4,7 +4,7 @@ import { registeredStudent } from "./Registration.entity";
 import { FacultyStaff } from "src/user/Entities/faculty-staff.entity";
 import { DocsRequirement } from "src/document-requirement/Entities/docsRequiement.entity";
 
-export enum Status {
+export enum uploadStatus {
     PENDING = 'Pending',
     APPROVED = 'Approved',
     REJECTED = 'Rejected'
@@ -17,7 +17,8 @@ export class documentUploads {
     
     @Column({
         type: 'varchar',
-        nullable: false
+        nullable: false,
+        unique: true,
     })
     documentType: string;
 
@@ -30,11 +31,11 @@ export class documentUploads {
 
     @Column({
         type: 'enum',
-        enum: Status,
+        enum: uploadStatus,
         nullable: false,
-        default: Status.PENDING
+        default: uploadStatus.PENDING
     })
-    status: Status;
+    status: uploadStatus;
 
     @Column({
         type: 'date',

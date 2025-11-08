@@ -1,24 +1,22 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, InternalServerErrorException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import path from 'path';
 import { Repository } from 'typeorm';
 import { DataSource } from 'typeorm';
+import path from 'path';
 
 import { Student } from 'src/user/Entities/student.entity';
 import { academicSessionDto, uploadDocDto } from './Dto/create-session.dto';
 import { academicSession } from './Entities/Academic-Session.entity';
-import { documentUploads, Status } from './Entities/Student-Uploads.entity';
-import { studentRepository } from 'src/user/Repositories/student.repository';
+import { documentUploads, uploadStatus } from './Entities/Student-Uploads.entity';
 import { DocsRequirement } from 'src/document-requirement/Entities/docsRequiement.entity';
+import { registeredStudent, Status } from './Entities/Registration.entity';
+import { error } from 'console';
 
 @Injectable()
 export class SessionService {
  constructor (
-        private readonly dataSource: DataSource,
-        private readonly studentRepo: studentRepository,
-        @InjectRepository(DocsRequirement) private readonly docReq: Repository<DocsRequirement>,
+        private readonly dataSource: DataSource,        
         @InjectRepository(academicSession) private readonly acadSession: Repository<academicSession>,
-        @InjectRepository(documentUploads) private readonly docUploads: Repository<documentUploads>
     ) {}
 
     //Logic to create an academic session by the admin
@@ -116,45 +114,101 @@ export class SessionService {
     }
 
     //Logic that handles the document student upload
-    async docUpload(file: Express.Multer.File, dto: uploadDocDto): Promise<documentUploads> {
-        try {
-            if(!file) throw new BadRequestException('No file uploaded');
-            
-            //validate file type
-            const allowedMimeTypes = ['image/jpeg', 'image/png', 'application/pdf'];
-            if (!allowedMimeTypes.includes(file.mimetype)) {
-                throw new BadRequestException('invalid file type; only JPEG, PNG & PDF allowed');
-            }
-            
-            //validate file size (max 10mb)
-            const maxSize = 8 * 1024 *1024;
-            if (file.size > maxSize) {
-                throw new BadRequestException('file is too large!, Max 8mb');
-            }
+    async docUpload(file: Express.Multer.File, dto: uploadDocDto) {
+        if(!file) throw new BadRequestException('No file uploaded');
 
-            //Automatically get the student Id from the response the frontend sends
-            const student = await this.studentRepo.findOne({ where: {id: dto.stuId}});
+        const queryRunner = this.dataSource.createQueryRunner();
+        await queryRunner.connect();
+        await queryRunner.startTransaction();
+               
+        try {
+            //1️⃣ Looking for the active academic session
+            const atvSession = await queryRunner.manager.findOne(academicSession, { where: {isActive: true}});
+            if(!atvSession) throw new BadRequestException('No active academic session');
+
+            //2️⃣ Automatically get the student Id from the response the frontend sends
+            const student = await queryRunner.manager.findOne(Student, { where: {id: dto.stuId}});
             if(!student) throw new BadRequestException('Student not found');
 
-            //Gets the Id of the document type they upload to have a clean relation on the DB
-            const docReq = await this.docReq.findOne({ where: {id: dto.docReqId}});
+            //3️⃣ Gets the Id of the document type they upload to have a clean relation on the DB
+            const docReq = await queryRunner.manager.findOne(DocsRequirement, { where: {id: dto.docReqId}});
             if(!docReq) throw new BadRequestException('Document Requirement not found');
+
+            /*4️⃣ find or create registration record (first section makes sure a registration record for 
+            a student is not existing; if it is attach the current and subsequent uploads to it)*/
+            let registration = await queryRunner.manager.findOne(registeredStudent, {
+                where: {
+                    student: { id: student.id },
+                    acadSession: { id: atvSession.id },
+                },
+                relations: ['upload', 'acadSession', 'student'],
+            });
+
+            if(!registration){
+                registration = queryRunner.manager.create(registeredStudent, {
+                    student: student,
+                    acadSession: atvSession,
+                    status: Status.ONGOING,                
+                });
+                registration = await queryRunner.manager.save(registeredStudent, registration);
+            }
             
+            //5️⃣ save file path and create upload record on DB
             const filePath = path.join('uploads', file.fieldname);
-            
-            const upload = this.docUploads.create({
+                        
+            const upload = queryRunner.manager.create(documentUploads, {
                 filePath,                
                 documentType: dto.documentType,                
                 uploadDate: new Date(),
-                status: Status.PENDING,
+                status: uploadStatus.PENDING,
                 student,
-                docReq
+                docReq,
+                registration
             });
             
-            return await this.docUploads.save(upload);
+            const savedUpload = await queryRunner.manager.save(documentUploads, upload);
+
+            /*Making use of nullish coalescing operator to check the values of selected property(ies) 
+            from left to right and assigns the value that is not null or undefined to the variable*/
+            const stuCategoryId = student.categoryId ?? null;
+
+            //use the determined student category id to count the number of documents the student is expected to upload
+            let reqDocsCount = 0;
+            if(stuCategoryId) {
+                reqDocsCount = await queryRunner.manager.count(DocsRequirement, {
+                    where: { docsMapCategory: {
+                        category: { id: stuCategoryId },
+                    },
+                },
+                relations: ['docsMapCategory', 'docsMapCategory.category'],
+                });
+            } else { error }
+            
+            //Count accepted uploads for this registration
+            const acceptedCount = await queryRunner.manager.count(documentUploads, {
+                where: {
+                    registration: { id: registration.id },
+                    status: uploadStatus.APPROVED,
+                },
+            });
+
+            //6️⃣ If acceptedCount equals reqDocsCount & reqDocsCount > 0 -> mark registration as COMPLETED
+            if(reqDocsCount > 0 && acceptedCount == reqDocsCount) {
+                registration.status = Status.COMPLETED;
+                await queryRunner.manager.save(registeredStudent, registration);
+            } else {
+                registration.status = Status.ONGOING;
+                await queryRunner.manager.save(registeredStudent, registration);
+            }
+            
+            await queryRunner.commitTransaction();
+            return savedUpload;
 
         } catch (error) {
-            throw new BadRequestException(error.message) || 'Failed to upload document'
+            await queryRunner.rollbackTransaction();
+            throw new InternalServerErrorException(error.message || 'Failed to upload document');
+        } finally {
+            await queryRunner.release();
         }
     }
 }

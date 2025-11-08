@@ -1,4 +1,4 @@
-import { Body, Controller, Post, UploadedFile, UseInterceptors, UsePipes, ValidationPipe } from '@nestjs/common';
+import { BadGatewayException, Body, Controller, Post, UploadedFile, UseInterceptors, UsePipes, ValidationPipe } from '@nestjs/common';
 import { SessionService } from './session.service';
 import { academicSessionDto, uploadDocDto } from './Dto/create-session.dto';
 
@@ -33,6 +33,15 @@ export class SessionController {
                     callback(null, `${file.filename}-${uniqueSuffix}${ext}`);
                 },
             }),
+            limits: { fileSize: 8 * 1024 * 1024 },
+            fileFilter: (req, file, callback) => {
+                const allowed = ['.pdf', '.png', '.jpg', '.jpeg'];
+                const ext = extname(file.originalname).toLowerCase();
+                if(!allowed.includes(ext)) {
+                    return callback(new BadGatewayException('Invalid file type'), false);
+                }
+                callback(null, true);
+            },
         }),
     )
     async uploadDoc(@UploadedFile() file: Express.Multer.File, @Body() dto: uploadDocDto) {

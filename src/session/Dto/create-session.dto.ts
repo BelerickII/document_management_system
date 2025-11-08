@@ -1,5 +1,4 @@
-import { IsEnum, IsInt, IsNotEmpty, IsString } from "class-validator";
-import { Status } from "../Entities/Student-Uploads.entity";
+import { IsInt, IsNotEmpty, IsString } from "class-validator";
 import { Type } from "class-transformer";
 
 export class academicSessionDto {

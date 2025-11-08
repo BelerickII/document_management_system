@@ -4,7 +4,7 @@ import { documentUploads } from "./Student-Uploads.entity";
 import { Column, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn, Unique } from "typeorm";
 
 export enum Status{
-    PENDING = 'Pending',
+    ONGOING = 'Ongoing',
     COMPLETED = 'Completed',
     FAILED = 'Failed'
 }
@@ -19,7 +19,7 @@ export class registeredStudent {
         type: 'enum',
         enum: Status,
         nullable: false,
-        default: Status.PENDING
+        default: Status.ONGOING
     })
     status: Status;
 

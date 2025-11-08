@@ -4,14 +4,11 @@ import { SessionService } from './session.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { academicSession } from './Entities/Academic-Session.entity';
 import { documentUploads } from './Entities/Student-Uploads.entity';
-import { DocumentRequirementModule } from 'src/document-requirement/document-requirement.module';
-import { UserModule } from 'src/user/user.module';
+import { registeredStudent } from './Entities/Registration.entity';
 
 @Module({
-  imports: [
-    DocumentRequirementModule,
-    UserModule,
-    TypeOrmModule.forFeature([academicSession, documentUploads])
+  imports: [    
+    TypeOrmModule.forFeature([academicSession, documentUploads, registeredStudent])
   ],
   controllers: [SessionController],
   providers: [SessionService],
