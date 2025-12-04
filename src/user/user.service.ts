@@ -262,7 +262,7 @@ export class UserService {
 
     //Student aspect
     async onStudentLog(userId: number, currentSession: string) {
-        return await this.studentRepo.studentLogin(userId, currentSession)
+        return this.studentRepo.studentLogin(userId, currentSession)
     }
 
     //helper for the authModule to find user by email, matric no or staff Id
@@ -307,4 +307,8 @@ export class UserService {
         return this.userRepo.save(user);
     }
  
+    //Staff aspect
+    async getAllUploadedDocs (page: number, limit: number) {
+        return this.staffRepo.getUploadedDocs(page, limit)
+    }
 }

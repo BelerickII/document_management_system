@@ -141,10 +141,12 @@ export class SessionService {
                     student: { id: student.id },
                     acadSession: { id: atvSession.id },
                 },
-                relations: ['upload', 'acadSession', 'student'],
+                relations: ['acadSession', 'student'],
             });
 
-            if(!registration){
+            if(registration){
+                console.log(`Exisiting registration found: ${registration.id}`);
+            } else {
                 registration = queryRunner.manager.create(registeredStudent, {
                     student: student,
                     acadSession: atvSession,
@@ -174,6 +176,7 @@ export class SessionService {
 
             //use the determined student category id to count the number of documents the student is expected to upload
             let reqDocsCount = 0;
+            
             if(stuCategoryId) {
                 reqDocsCount = await queryRunner.manager.count(DocsRequirement, {
                     where: { docsMapCategory: {

@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, ParseIntPipe, Post, Query, UploadedFile, UseInterceptors, UsePipes, ValidationPipe } from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseIntPipe, Patch, Post, Query, UploadedFile, UseInterceptors, UsePipes, ValidationPipe } from '@nestjs/common';
 import { UserService } from './user.service';
 import { FileInterceptor } from '@nestjs/platform-express';
 
@@ -42,10 +42,21 @@ export class UserController {
         return this.userService.createAdmin(dto)
     }
 
+    @Patch('staff/doc-status')
+    async patchDocStatus () {
+
+    }
+
     //Handler for getting user by email, matric no & staff id
     @Get('search')
     async searchUsers(@Query('query') searchTerm: string): Promise<User[]> {
         return this.userService.searchUsers(searchTerm)
+    }
+
+    //Handler for getting student uploaded documents
+    @Get('uploads')
+    async getAllUploadedDocs(@Query('page') page = '1', @Query('limit') limit ='50') {
+        return this.userService.getAllUploadedDocs(+page, +limit)
     }
 
     //Handler for getting all users & filtering by role
@@ -60,6 +71,4 @@ export class UserController {
         return this.userService.getUserById(id)
     }
 
-    //-------------Students Endpoints-------------//
-    
 }

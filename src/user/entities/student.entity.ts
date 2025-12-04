@@ -72,7 +72,6 @@ export class Student {
     @Column({
         type: 'varchar',
         nullable: true,
-        unique: true,
     })
     academicSession?: string;
 }

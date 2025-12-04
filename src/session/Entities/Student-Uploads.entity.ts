@@ -17,8 +17,7 @@ export class documentUploads {
     
     @Column({
         type: 'varchar',
-        nullable: false,
-        unique: true,
+        nullable: false
     })
     documentType: string;
 
