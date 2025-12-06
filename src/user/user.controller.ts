@@ -1,11 +1,13 @@
-import { Body, Controller, Get, Param, ParseIntPipe, Patch, Post, Query, UploadedFile, UseInterceptors, UsePipes, ValidationPipe } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, Param, ParseIntPipe, Patch, Post, Query, Req, UploadedFile, UseGuards, UseInterceptors, UsePipes, ValidationPipe } from '@nestjs/common';
 import { UserService } from './user.service';
 import { FileInterceptor } from '@nestjs/platform-express';
 
+import { reviewDto } from './Dto/review.dto';
 import { CreateStudentDto } from './Dto/create-student.dto';
 import { CreateFacultyDto } from './Dto/create-faculty-staff.dto';
 import { CreateUserDto } from './Dto/create-user.dto';
 import { User } from './Entities/user.entity';
+import { AuthGuard } from '@nestjs/passport';
 
 
 @Controller('user')
@@ -42,9 +44,35 @@ export class UserController {
         return this.userService.createAdmin(dto)
     }
 
-    @Patch('staff/doc-status')
-    async patchDocStatus () {
+    //Handler hit when the staff clicks on the view button of an uploaded document
+    @Patch(':id/lock')
+    @UseGuards(AuthGuard('jwt'))
+    async lockDocument (@Param('id', ParseIntPipe) id: number, @Req() req: any) {
+        const documentId = id;        
+        const staffId: number = req.user.id;
+        // console.log(staffId);
+        if (!staffId) throw new BadRequestException('Unauthenicated');
+        
+        return this.userService.lockDocument(documentId, staffId);
+    }
 
+    //Handler hit when the staff Accept/Reject the viewed document
+    @Patch(':id/review')
+    @UseGuards(AuthGuard('jwt'))
+    async reviewDoc (@Param('id', ParseIntPipe) id: number, @Body() body: reviewDto, @Req() req: any) {
+        const documentId = id;
+        const staffId: number = req.user.id;
+        // console.log(staffId);
+        if (!staffId) throw new BadRequestException('Unauthenicated');
+
+        const action = body.action;
+        if (action === undefined) throw new BadRequestException('Action required')
+
+        if (action === 'Rejected' && !body.comment) {
+            throw new BadRequestException('Reason for rejection is required');
+        }
+
+        return this.userService.reviewDocument(documentId, staffId, action, body.comment);
     }
 
     //Handler for getting user by email, matric no & staff id

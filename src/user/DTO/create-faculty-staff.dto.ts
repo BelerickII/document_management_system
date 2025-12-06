@@ -24,5 +24,5 @@ export class CreateFacultyDto {
 
     @IsNotEmpty()
     @IsEnum(UserRole)
-    role: UserRole = UserRole.FACULTY;    
+    role: UserRole = UserRole.STAFF;    
 }

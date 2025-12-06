@@ -1,24 +1,32 @@
 import { DataSource, Repository } from "typeorm";
-import { FacultyStaff } from "../Entities/faculty-staff.entity";
-import { BadRequestException, Injectable } from "@nestjs/common";
+import { BadRequestException, Injectable, Logger, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { documentUploads } from "src/session/Entities/Student-Uploads.entity";
+
+import { documentGateway } from "../Others/staff.gateway";
+import { documentUploads, uploadStatus } from "src/session/Entities/Student-Uploads.entity";
 import { academicSession } from "src/session/Entities/Academic-Session.entity";
+import { User } from "../Entities/user.entity";
+import { FacultyStaff } from "../Entities/faculty-staff.entity";
 
 @Injectable()
 export class staffRepository extends Repository<FacultyStaff> {
     constructor(
         private dataSource: DataSource,
+        private readonly gateway: documentGateway,
         @InjectRepository(documentUploads) private readonly docUploads: Repository<documentUploads>,
     ) {
         super(FacultyStaff, dataSource.createEntityManager());
     }
 
+    private readonly logger = new Logger('staffRepository');
+
+    private LOCK_DURATION_MS = 5 * 60 * 1000;
+
     async getUploadedDocs(page = 1, limit = 50) {
         const parsedPage = !isNaN(page) && page> 0 ? page: 1;
         const parsedLimit = !isNaN(limit) && limit> 0 ? limit: 50;
         
-        //Make sure to fetch from the active session
+        //Make sure to fetch from the active session only
         const atvSession = await this.dataSource.getRepository(academicSession).findOne({ where: {isActive: true} });
         if(!atvSession) {
             throw new BadRequestException('No active academic session, kindly wait for a new session to be active');
@@ -52,8 +60,71 @@ export class staffRepository extends Repository<FacultyStaff> {
         return pendingDocs;            
     }
 
-    async patchDocStatus () {
-        
+    async lockDocument (documentId: number, staffId: number) {
+        const doc = await this.docUploads.findOne({ where: {id: documentId } });
+        if (!doc) throw new BadRequestException('Document not found');
+
+        //if document is already in review by another staff -> deny (this will rarely happen sha)
+        if (doc.lockedBy && doc.lockedBy !== staffId) {
+            throw new BadRequestException('Document is currently being reviewed');
+        }
+
+        doc.lockedBy = staffId;
+        doc.lockedAt = new Date();
+
+        await this.docUploads.save(doc);
+
+        //Broadcast lock
+        this.gateway.emitDocumentLocked(doc.id, staffId);
+
+        return doc;
+    }
+
+    async reviewDocument(documentId: number, staffId: number, action: uploadStatus, comment?: string) {
+        //get the id of the staff reviewing the document        
+        const staff = await this.findOne({ where: {user: {id: staffId}} }); //Took me a while to get the right query
+        if (!staff) throw new NotFoundException('Staff is not found');
+
+        const doc = await this.docUploads.findOne({ where: { id: documentId} });
+        if (!doc) throw new NotFoundException('Document not found');
+
+        //checks if the staff reviewing the document is the one that locked it (more like handling edge cases lmao)
+        if (doc.lockedBy !== staffId) {
+            //throw an error or allow the current staff if the lock has expired
+            const lockedAt = doc.lockedAt?.getTime() ?? 0;
+            if(!(doc.lockedBy === null || Date.now() - lockedAt > this.LOCK_DURATION_MS)){
+                throw new BadRequestException('You are not the reviewer for this document');
+            }
+        }
+
+        //update fields
+        doc.staff = staff;
+        doc.status = action;
+        doc.reviewDate = new Date();
+
+        //If rejected, store comment
+        if (action === uploadStatus.APPROVED){
+            doc.Comment = null;
+        } else {
+            doc.Comment = comment;
+        }
+
+        //Clear lock
+        doc.lockedBy = null;
+        doc.lockedAt = null;
+
+        await this.docUploads.save(doc)
+
+        if (action === uploadStatus.REJECTED) {
+            try {
+                const stuMail = await this.dataSource.getRepository(User).findOne({ where: {email: doc.student.user.email}})
+                // console.log(stuMail);
+                // const stuName = 
+            } catch (error) {
+                
+            }
+
+        }
     }
 
 }

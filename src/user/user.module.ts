@@ -13,6 +13,8 @@ import { FacultyStaff } from './Entities/faculty-staff.entity';
 import { Student } from './Entities/student.entity';
 import { DocumentRequirementModule } from 'src/document-requirement/document-requirement.module';
 import { SessionModule } from 'src/session/session.module';
+import { documentGateway } from './Others/staff.gateway';
+import { emailService } from './Others/email.service';
 
 @Module({
   imports: [
@@ -21,7 +23,7 @@ import { SessionModule } from 'src/session/session.module';
     SessionModule,
   ],
   controllers: [UserController],
-  providers: [userRepository, staffRepository, studentRepository, UserService],
+  providers: [userRepository, staffRepository, studentRepository, UserService, documentGateway, emailService],
   exports: [UserService, TypeOrmModule, studentRepository]
 })
 

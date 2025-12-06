@@ -19,6 +19,7 @@ import { userRepository } from './Repositories/user.repository';
 import { studentRepository } from './Repositories/student.repository';
 import { staffRepository } from './Repositories/faculty-staff.repository';
 import { StudentDepartment } from 'src/document-requirement/Entities/Department.entity';
+import { uploadStatus } from 'src/session/Entities/Student-Uploads.entity';
 
 
 @Injectable()
@@ -217,7 +218,7 @@ export class UserService {
                 staffID: dto.staffID                           
             } as Partial<FacultyStaff>);
 
-        return await this.staffRepo.save(staff);        
+            return await this.staffRepo.save(staff);        
 
         } catch (error) {
             this.logger.error('Error creating staff record', error);
@@ -267,34 +268,28 @@ export class UserService {
 
     //helper for the authModule to find user by email, matric no or staff Id
     async findByUsername(username: string) {
-        // 1️⃣ Try by email
-        let user = await this.userRepo.createQueryBuilder('user')
-            .addSelect('user.password')
-            .addSelect('user.mustResetPassword')
-            .addSelect('user.lastPasswordReset')
-            .where('user.email = :email', {email: username})
-            .getOne();
-        if (user) return user;
-
-        // 2️⃣ Try by matric number (Student)
-        user = await this.userRepo.createQueryBuilder('user')
+        const user = await this.userRepo.createQueryBuilder('user')
             .addSelect('user.password')
             .addSelect('user.mustResetPassword')
             .addSelect('user.lastPasswordReset')
             .leftJoinAndSelect('user.student', 'student')
-            .where('student.matric_no = :matric_no', {matric_no: username})
-            .getOne()
-        if (user) return user;
-
-        // 3️⃣ Try by staff ID (Staff)
-        user = await this.userRepo.createQueryBuilder('user')
-            .addSelect('user.password')
-            .addSelect('user.mustResetPassword')
-            .addSelect('user.lastPasswordReset')
             .leftJoinAndSelect('user.staff', 'staff')
-            .where('staff.staffID = :staffID', {staffID: username})
+            .where('user.email = :username', { username })
+            .orWhere('student.matric_no = :username', { username })
+            .orWhere('staff.staffID = :username', { username })
+            .orderBy(
+                //I am forcing the database to give priority here to query 
+                `CASE
+                    WHEN user.email = :username THEN 1
+                    WHEN student.matric_no = :username THEN 2
+                    WHEN staff.staffID = :username THEN 3
+                    ELSE 4 END`,
+                'ASC'
+            )
+            .setParameters({ username })
             .getOne();
-        if (user) return user;
+        
+        return user;
     }
 
     //method to get the user id from the Temp JWT token the user gets on first login
@@ -310,5 +305,13 @@ export class UserService {
     //Staff aspect
     async getAllUploadedDocs (page: number, limit: number) {
         return this.staffRepo.getUploadedDocs(page, limit)
+    }
+
+    async lockDocument (documentId: number, staffId: number) {
+        return this.staffRepo.lockDocument(documentId, staffId)
+    }
+
+    async reviewDocument(documentId: number, staffId: number, action: uploadStatus, comment?: string) {
+        return this.staffRepo.reviewDocument(documentId, staffId, action, comment);
     }
 }
