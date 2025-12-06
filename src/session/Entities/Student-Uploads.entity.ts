@@ -1,4 +1,4 @@
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, Index, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
 import { Student } from "src/user/Entities/student.entity";
 import { registeredStudent } from "./Registration.entity";
 import { FacultyStaff } from "src/user/Entities/faculty-staff.entity";
@@ -34,6 +34,7 @@ export class documentUploads {
         nullable: false,
         default: uploadStatus.PENDING
     })
+    @Index()
     status: uploadStatus;
 
     @Column({
@@ -56,7 +57,19 @@ export class documentUploads {
         length: 400,
         nullable: true,
     })
-    Comment?: string;
+    Comment?: string | null;
+
+    @Column({
+        nullable: true,
+        type: 'int'
+    })
+    lockedBy: number | null;
+
+    @Column({
+        nullable: true,
+        type: 'timestamp'
+    })
+    lockedAt: Date | null;
 
     @ManyToOne(() => Student, (student) => student.docUpload)    
     student: Student;

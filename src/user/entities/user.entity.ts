@@ -1,10 +1,10 @@
-import { Column, Entity, OneToOne, PrimaryGeneratedColumn, TableInheritance } from "typeorm";
+import { Column, Entity, Index, OneToOne, PrimaryGeneratedColumn, TableInheritance } from "typeorm";
 import { Student } from "./student.entity";
 import { FacultyStaff } from "./faculty-staff.entity";
 
 export enum UserRole {
     STUDENT = 'student',
-    FACULTY = 'faculty',
+    STAFF = 'staff',
     ADMIN = 'admin',
 }
 
@@ -34,6 +34,7 @@ export class User {
         nullable: false, 
         unique: true,
     })
+    @Index()
     email: string;
 
     @Column({
@@ -65,8 +66,9 @@ export class User {
     mustResetPassword: boolean;
 
     @Column({
-        type: 'timestamp',        
-        default: () => 'CURRENT_TIMESTAMP',
+        type: 'timestamp',
+        nullable: true,       
+        // default: () => 'CURRENT_TIMESTAMP',
         onUpdate: 'CURRENT_TIMESTAMP',
         select: false,
     })

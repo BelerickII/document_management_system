@@ -1,4 +1,4 @@
-import { Column, Entity, JoinColumn, OneToMany, OneToOne, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, Index, JoinColumn, OneToMany, OneToOne, PrimaryGeneratedColumn } from "typeorm";
 import { User } from "./user.entity";
 import { documentUploads } from "src/session/Entities/Student-Uploads.entity";
 
@@ -19,6 +19,7 @@ export class FacultyStaff {
         unique: true,
         nullable: false
     })
+    @Index()
     staffID: string;
     
 }

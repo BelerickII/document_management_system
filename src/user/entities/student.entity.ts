@@ -1,4 +1,4 @@
-import { Column, Entity, JoinColumn, ManyToOne, OneToMany, OneToOne, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, OneToOne, PrimaryGeneratedColumn } from "typeorm";
 import { User } from "./user.entity";
 import { StudentDepartment } from "src/document-requirement/Entities/Department.entity";
 import { Department } from "./enum";
@@ -35,6 +35,7 @@ export class Student {
         unique: true,
         nullable: false
     })
+    @Index()
     matric_no: string; 
     
     @Column({
