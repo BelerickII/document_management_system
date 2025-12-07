@@ -21,9 +21,9 @@ export class AuthService {
     //Logic to validate a user login credentials (username & password)
     async validateUser (username: string, password: string) {
         const user = await this.userservice.findByUsername(username);
+        // console.log(user);
         if(!user) throw new UnauthorizedException('Invalid Credentials');
-
-        // console.log(user); console.log('Password from request:', password); console.log('Password from DB:', user.password);
+        // console.log('Password from request:', password); console.log('Password from DB:', user.password);
         
         const isMatch = await bcrypt.compare(password, user.password);
         if(!isMatch) throw new UnauthorizedException('Invalid Credentials');
@@ -49,13 +49,10 @@ export class AuthService {
         if( user.role === 'student') {
             const currentSession = await this.currentSession();
             const studentData = await this.studentRepo.studentLogin(user.id, currentSession);            
-            return { access_token, studentData}
+            return { access_token, studentData};
+        } else if (user.role === 'staff' || 'admin') {
+            return { access_token };
         }
-
-        //For Admins
-        return {
-            access_token            
-        };
     }
 
     //Logic to reset user password on first login and update it on DB

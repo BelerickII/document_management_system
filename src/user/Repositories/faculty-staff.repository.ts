@@ -7,12 +7,14 @@ import { documentUploads, uploadStatus } from "src/session/Entities/Student-Uplo
 import { academicSession } from "src/session/Entities/Academic-Session.entity";
 import { User } from "../Entities/user.entity";
 import { FacultyStaff } from "../Entities/faculty-staff.entity";
+import { emailService } from "../Others/email.service";
 
 @Injectable()
 export class staffRepository extends Repository<FacultyStaff> {
     constructor(
         private dataSource: DataSource,
         private readonly gateway: documentGateway,
+        private readonly mailService: emailService,
         @InjectRepository(documentUploads) private readonly docUploads: Repository<documentUploads>,
     ) {
         super(FacultyStaff, dataSource.createEntityManager());
@@ -117,14 +119,46 @@ export class staffRepository extends Repository<FacultyStaff> {
 
         if (action === uploadStatus.REJECTED) {
             try {
-                const stuMail = await this.dataSource.getRepository(User).findOne({ where: {email: doc.student.user.email}})
-                // console.log(stuMail);
-                // const stuName = 
+                const stuMail = await this.getStuMail(doc.id);                
+                const stuName = await this.getStuName(doc.id);
+                if (stuMail) {
+                    //wanna mail the student that doc has been rejected
+                    await this.mailService.sendRejectionEmail(stuMail, stuName, doc.Comment || '', doc.documentType)
+                } else {
+                    this.logger.warn(`No email found for studentId: ${doc.student}`);
+                }                
             } catch (error) {
-                
+                this.logger.error('Failed to send rejection email: ' + error?.message);
             }
 
         }
+        return {message: 'Document reviewed successfully'};
     }
 
+    //these functions help get the student Email & Name 
+    private async getStuMail (documentId: number) {
+        const result = await this.docUploads.createQueryBuilder('doc')
+            .leftJoinAndSelect('doc.student', 'student')
+            .leftJoinAndSelect('student.user', 'user')
+            .select('user.email', 'email')
+            .where('doc.id = :documentId', { documentId })
+            .getRawOne();
+            
+            if(!result) throw new NotFoundException(`can't find the requested student email of the document with the Id: ${documentId}`);
+        
+        return result?.email ?? null;        
+    }
+
+    private async getStuName (documentId: number) {
+        const result = await this.docUploads.createQueryBuilder('doc')
+            .leftJoinAndSelect('doc.student', 'student')
+            .leftJoinAndSelect('student.user', 'user')
+            .select('user.firstName', 'firstName')
+            .where('doc.id = :documentId', { documentId })
+            .getRawOne();
+
+            if(!result) throw new NotFoundException(`can't find the requested student name of the document with the Id: ${documentId}`);
+
+        return result?.firstName ?? null;
+    }
 }

@@ -248,7 +248,7 @@ export class UserService {
     }
 
     //------------GET REQUESTS----------//
-    //Admin aspect
+    //ADMIN ASPECT
     async getAllUsers(page: number, limit: number, role?: string) {
        return await this.userRepo.findAllUsers(page, limit, role)
     }
@@ -261,7 +261,7 @@ export class UserService {
         return await this.userRepo.findUsers(searchTerm)
     }
 
-    //Student aspect
+    //STUDENT ASPECT
     async onStudentLog(userId: number, currentSession: string) {
         return this.studentRepo.studentLogin(userId, currentSession)
     }
@@ -302,7 +302,7 @@ export class UserService {
         return this.userRepo.save(user);
     }
  
-    //Staff aspect
+    //STAFF ASPECT
     async getAllUploadedDocs (page: number, limit: number) {
         return this.staffRepo.getUploadedDocs(page, limit)
     }
