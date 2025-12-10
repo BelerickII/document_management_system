@@ -15,12 +15,13 @@ import { error } from 'console';
 @Injectable()
 export class SessionService {
  constructor (
-        private readonly dataSource: DataSource,        
+        private readonly dataSource: DataSource,
+        @InjectRepository(documentUploads) private readonly uploads: Repository<documentUploads>,
         @InjectRepository(academicSession) private readonly acadSession: Repository<academicSession>,
     ) {}
 
     //Logic to create an academic session by the admin
-    async newSession(dto: academicSessionDto): Promise<academicSession> {
+    async newSession(dto: academicSessionDto): Promise<{ message: string }> {
         try {
             //Trim spaces in strings
             for (const key in dto) {
@@ -33,7 +34,7 @@ export class SessionService {
             });
 
             if (existing){
-                throw new BadRequestException(`Student with matric number ${dto.sessionId} already exists`)
+                throw new BadRequestException(`${dto.sessionId} session already exists`)
             }
 
             //Check if there's an active session
@@ -51,7 +52,9 @@ export class SessionService {
                 isActive: true,
             });
 
-            return await this.acadSession.save(session);
+            await this.acadSession.save(session);
+            
+            return {message: 'Session created successfully'};
 
         } catch (error) {
             throw new BadRequestException(error.message || 'Failed to create Academic Session')
@@ -213,5 +216,26 @@ export class SessionService {
         } finally {
             await queryRunner.release();
         }
+    }
+
+    //Logic that handles student document reupload
+    async stuReupload(file: Express.Multer.File, documentId: number, studentId: number): Promise<{message: string;}> {
+        if(!file) throw new BadRequestException('No file uploaded');
+
+        const existingDoc = await this.uploads.findOne({ where: { id: documentId, status: uploadStatus.REJECTED, student: {id: studentId} }});
+
+        if (!existingDoc) throw new BadRequestException('Rejected document not found');
+
+        //Overwrite the existing record
+        existingDoc.filePath = `uploads/${file.filename}`;
+        existingDoc.status = uploadStatus.PENDING;
+        existingDoc.Comment = null;
+        existingDoc.uploadDate = new Date();
+        existingDoc.reviewDate = null;
+        existingDoc.staff = null;
+
+        await this.uploads.save(existingDoc);
+
+        return { message: 'Document sucessfully overwritten' };
     }
 }
