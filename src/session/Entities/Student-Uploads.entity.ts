@@ -50,7 +50,7 @@ export class documentUploads {
         nullable: true,
         onUpdate: 'CURRENT_DATE'
     })
-    reviewDate?: Date;
+    reviewDate: Date | null;
 
     @Column({
         type: 'varchar',
@@ -78,7 +78,7 @@ export class documentUploads {
     registration: registeredStudent;
 
     @ManyToOne(() => FacultyStaff, (staff) => staff.document)
-    staff: FacultyStaff;
+    staff: FacultyStaff | null;
 
     @ManyToOne(() => DocsRequirement, (docReq) => docReq.document)
     docReq: DocsRequirement;

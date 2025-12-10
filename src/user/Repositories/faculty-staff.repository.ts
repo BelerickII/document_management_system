@@ -5,7 +5,6 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { documentGateway } from "../Others/staff.gateway";
 import { documentUploads, uploadStatus } from "src/session/Entities/Student-Uploads.entity";
 import { academicSession } from "src/session/Entities/Academic-Session.entity";
-import { User } from "../Entities/user.entity";
 import { FacultyStaff } from "../Entities/faculty-staff.entity";
 import { emailService } from "../Others/email.service";
 
