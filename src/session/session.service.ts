@@ -10,7 +10,6 @@ import { academicSession } from './Entities/Academic-Session.entity';
 import { documentUploads, uploadStatus } from './Entities/Student-Uploads.entity';
 import { DocsRequirement } from 'src/document-requirement/Entities/docsRequiement.entity';
 import { registeredStudent, Status } from './Entities/Registration.entity';
-import { error } from 'console';
 
 @Injectable()
 export class SessionService {
@@ -102,7 +101,18 @@ export class SessionService {
                 await queryRunner.manager.save(Student, student)
             }
 
-            // 5️⃣ Commit the transaction
+            // 5️⃣ Fetch registration records and change the status from "ONGOING" -> "FAILED"
+            const registration: registeredStudent[] = await queryRunner.manager.find(registeredStudent, {
+                where: { status: Status.ONGOING }
+            });
+
+            for (const reg of registration) {
+                reg.status = Status.FAILED;
+
+                await queryRunner.manager.save(registeredStudent, reg);
+            }
+
+            
             await queryRunner.commitTransaction();
 
             return {
@@ -175,38 +185,8 @@ export class SessionService {
 
             /*Making use of nullish coalescing operator to check the values of selected property(ies) 
             from left to right and assigns the value that is not null or undefined to the variable*/
-            const stuCategoryId = student.categoryId ?? null;
+            // const stuCategoryId = student.categoryId ?? null;
 
-            //use the determined student category id to count the number of documents the student is expected to upload
-            let reqDocsCount = 0;
-            
-            if(stuCategoryId) {
-                reqDocsCount = await queryRunner.manager.count(DocsRequirement, {
-                    where: { docsMapCategory: {
-                        category: { id: stuCategoryId },
-                    },
-                },
-                relations: ['docsMapCategory', 'docsMapCategory.category'],
-                });
-            } else { error }
-            
-            //Count accepted uploads for this registration
-            const acceptedCount = await queryRunner.manager.count(documentUploads, {
-                where: {
-                    registration: { id: registration.id },
-                    status: uploadStatus.APPROVED,
-                },
-            });
-
-            //6️⃣ If acceptedCount equals reqDocsCount & reqDocsCount > 0 -> mark registration as COMPLETED
-            if(reqDocsCount > 0 && acceptedCount == reqDocsCount) {
-                registration.status = Status.COMPLETED;
-                await queryRunner.manager.save(registeredStudent, registration);
-            } else {
-                registration.status = Status.ONGOING;
-                await queryRunner.manager.save(registeredStudent, registration);
-            }
-            
             await queryRunner.commitTransaction();
             return savedUpload;
 

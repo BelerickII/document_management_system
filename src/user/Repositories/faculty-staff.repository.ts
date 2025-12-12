@@ -7,6 +7,8 @@ import { documentUploads, uploadStatus } from "src/session/Entities/Student-Uplo
 import { academicSession } from "src/session/Entities/Academic-Session.entity";
 import { FacultyStaff } from "../Entities/faculty-staff.entity";
 import { emailService } from "../Others/email.service";
+import { registeredStudent, Status } from "src/session/Entities/Registration.entity";
+import { DocsRequirement } from "src/document-requirement/Entities/docsRequiement.entity";
 
 @Injectable()
 export class staffRepository extends Repository<FacultyStaff> {
@@ -15,6 +17,8 @@ export class staffRepository extends Repository<FacultyStaff> {
         private readonly gateway: documentGateway,
         private readonly mailService: emailService,
         @InjectRepository(documentUploads) private readonly docUploads: Repository<documentUploads>,
+        @InjectRepository(registeredStudent) private readonly reg: Repository<registeredStudent>,
+        @InjectRepository(DocsRequirement) private readonly docReq: Repository<DocsRequirement>
     ) {
         super(FacultyStaff, dataSource.createEntityManager());
     }
@@ -86,7 +90,10 @@ export class staffRepository extends Repository<FacultyStaff> {
         const staff = await this.findOne({ where: {user: {id: staffId}} }); //Took me a while to get the right query
         if (!staff) throw new NotFoundException('Staff is not found');
 
-        const doc = await this.docUploads.findOne({ where: { id: documentId} });
+        const doc = await this.docUploads.findOne({ 
+            where: { id: documentId},
+            relations: ['registration', 'registration.student']
+        });
         if (!doc) throw new NotFoundException('Document not found');
 
         //checks if the staff reviewing the document is the one that locked it (more like handling edge cases lmao)
@@ -114,7 +121,7 @@ export class staffRepository extends Repository<FacultyStaff> {
         doc.lockedBy = null;
         doc.lockedAt = null;
 
-        await this.docUploads.save(doc)
+        await this.docUploads.save(doc);
 
         if (action === uploadStatus.REJECTED) {
             try {
@@ -131,6 +138,14 @@ export class staffRepository extends Repository<FacultyStaff> {
             }
 
         }
+
+        const registration = await this.reg.findOne({
+            where: { id: doc.registration.id },
+            relations: ['student']
+        });
+
+        await this.changeRegStatus(registration);
+
         return {message: 'Document reviewed successfully'};
     }
 
@@ -159,5 +174,40 @@ export class staffRepository extends Repository<FacultyStaff> {
             if(!result) throw new NotFoundException(`can't find the requested student name of the document with the Id: ${documentId}`);
 
         return result?.firstName ?? null;
+    }
+
+    //helper method to change the registration record status to "COMPLETED"
+    private async changeRegStatus (registration: registeredStudent | null) {
+        const stuCategoryId = registration?.student.categoryId;
+        if(!stuCategoryId) throw new BadRequestException("Student category missing");
+
+        //get the count of the required documents a students need to upload based on their category
+        const reqDocsCount = await this.docReq.count({
+            where: {
+                docsMapCategory: {
+                    category: { id: stuCategoryId }
+                } 
+            },
+            relations: ['docsMapCategory', 'docsMapCategory.category'],
+        });
+        // console.log(reqDocsCount);
+
+        //get the count of the approved documents a student has uploaded
+        const approvedCount = await this.docUploads.count({
+            where: {
+                registration: { id: registration.id },
+                status: uploadStatus.APPROVED,
+            },
+        });
+        // console.log(approvedCount);
+
+        if (approvedCount === reqDocsCount && reqDocsCount > 0) {
+            registration.status = Status.COMPLETED;
+            registration.dateRegistered = new Date();
+        } else {
+            registration.status = Status.ONGOING;
+        }
+
+        await this.reg.save(registration); //Foolish me forgot this line and was wondering what was going on lmao
     }
 }
