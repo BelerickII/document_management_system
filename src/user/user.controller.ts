@@ -75,6 +75,11 @@ export class UserController {
         return this.userService.reviewDocument(documentId, staffId, action, body.comment);
     }
 
+    @Patch(':id/lock-expired')
+    unlockExpired(@Param('id', ParseIntPipe) id: number) {
+        return this.userService.unlockExpired(id);
+    }
+
     //Handler for getting user by email, matric no & staff id
     @Get('search')
     async searchUsers(@Query('query') searchTerm: string): Promise<User[]> {

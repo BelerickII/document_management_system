@@ -65,7 +65,8 @@ export class staffRepository extends Repository<FacultyStaff> {
         return pendingDocs;            
     }
 
-    async lockDocument (documentId: number, staffId: number) {
+    //this is the method that handle the view modal on the frontend application
+    async lockDocument (documentId: number, staffId: number): Promise<string> {
         const doc = await this.docUploads.findOne({ where: {id: documentId } });
         if (!doc) throw new BadRequestException('Document not found');
 
@@ -82,9 +83,25 @@ export class staffRepository extends Repository<FacultyStaff> {
         //Broadcast lock
         this.gateway.emitDocumentLocked(doc.id, staffId);
 
-        return doc;
+        return doc.filePath;
     }
 
+    //frontend calls this method if there's no approval within some minutes
+    async unlockIfExpired(documentId: number) {
+        const doc = await this.docUploads.findOne({ where: {id: documentId} });
+        if (!doc || !doc.lockedAt) return;
+
+        const isExpired = Date.now() - doc.lockedAt.getTime() >= this.LOCK_DURATION_MS;
+        if (!isExpired) return;
+
+        doc.lockedAt = null;
+        doc.lockedBy = null;
+
+        await this.docUploads.save(doc);
+        this.gateway.emitDocumentUnlocked(documentId);
+    }
+
+    //this method handles the approval or rejection of an uploaded document
     async reviewDocument(documentId: number, staffId: number, action: uploadStatus, comment?: string) {
         //get the id of the staff reviewing the document        
         const staff = await this.findOne({ where: {user: {id: staffId}} }); //Took me a while to get the right query
