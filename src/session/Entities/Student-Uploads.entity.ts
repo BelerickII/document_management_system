@@ -24,6 +24,13 @@ export class documentUploads {
     @Column({
         type: 'varchar',
         nullable: false,
+        length: 150
+    })
+    fileName: string; // dec 19th, 2025
+
+    @Column({
+        type: 'varchar',
+        nullable: false,
         length: 250,
     })
     filePath: string;

@@ -10,11 +10,13 @@ import { academicSession } from './Entities/Academic-Session.entity';
 import { documentUploads, uploadStatus } from './Entities/Student-Uploads.entity';
 import { DocsRequirement } from 'src/document-requirement/Entities/docsRequiement.entity';
 import { registeredStudent, Status } from './Entities/Registration.entity';
+import { SseService } from 'src/sse/sse.service';
 
 @Injectable()
 export class SessionService {
  constructor (
         private readonly dataSource: DataSource,
+        private readonly sseService: SseService,
         @InjectRepository(documentUploads) private readonly uploads: Repository<documentUploads>,
         @InjectRepository(academicSession) private readonly acadSession: Repository<academicSession>,
     ) {}
@@ -169,9 +171,10 @@ export class SessionService {
             }
             
             //5️⃣ save file path and create upload record on DB
-            const filePath = path.join('uploads', file.fieldname);
+            const filePath = path.join('uploads', file.filename);
                         
             const upload = queryRunner.manager.create(documentUploads, {
+                fileName: file.originalname, // dec 19th, 2025
                 filePath,                
                 documentType: dto.documentType,                
                 uploadDate: new Date(),
@@ -182,10 +185,20 @@ export class SessionService {
             });
             
             const savedUpload = await queryRunner.manager.save(documentUploads, upload);
-
             /*Making use of nullish coalescing operator to check the values of selected property(ies) 
             from left to right and assigns the value that is not null or undefined to the variable*/
             // const stuCategoryId = student.categoryId ?? null;
+
+            ///SSE to frontend to mutate upload row records on student facing app
+            this.sseService.emitDocumentUpdate({
+                studentId: student.id,
+                sessionId: atvSession.id,
+                payload: {
+                    documentTypeId: savedUpload.documentType,
+                    fileName: savedUpload.fileName,
+                    status: savedUpload.status,
+                },
+            });
 
             await queryRunner.commitTransaction();
             return savedUpload;

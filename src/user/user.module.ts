@@ -15,6 +15,7 @@ import { DocumentRequirementModule } from 'src/document-requirement/document-req
 import { SessionModule } from 'src/session/session.module';
 import { documentGateway } from './Others/staff.gateway';
 import { emailService } from './Others/email.service';
+import { SseService } from 'src/sse/sse.service';
 
 @Module({
   imports: [
@@ -23,7 +24,15 @@ import { emailService } from './Others/email.service';
     SessionModule,
   ],
   controllers: [UserController],
-  providers: [userRepository, staffRepository, studentRepository, UserService, documentGateway, emailService],
+  providers: [
+    userRepository,
+    staffRepository,
+    studentRepository,
+    UserService,
+    documentGateway,
+    emailService,
+    SseService
+  ],
   exports: [UserService, TypeOrmModule, studentRepository]
 })
 

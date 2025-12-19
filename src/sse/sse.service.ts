@@ -6,8 +6,8 @@ export class SseService {
     private subject = new Subject<any>();
 
     emitDocumentUpdate(event: {
-        studentId: string,
-        sessionId: string,
+        studentId: number,
+        sessionId: number,
         payload: any;
     }) {
         this.subject.next(event);

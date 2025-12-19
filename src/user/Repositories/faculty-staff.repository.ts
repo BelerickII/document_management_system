@@ -9,6 +9,7 @@ import { FacultyStaff } from "../Entities/faculty-staff.entity";
 import { emailService } from "../Others/email.service";
 import { registeredStudent, Status } from "src/session/Entities/Registration.entity";
 import { DocsRequirement } from "src/document-requirement/Entities/docsRequiement.entity";
+import { SseService } from "src/sse/sse.service";
 
 @Injectable()
 export class staffRepository extends Repository<FacultyStaff> {
@@ -16,6 +17,7 @@ export class staffRepository extends Repository<FacultyStaff> {
         private dataSource: DataSource,
         private readonly gateway: documentGateway,
         private readonly mailService: emailService,
+        private readonly sseService: SseService,
         @InjectRepository(documentUploads) private readonly docUploads: Repository<documentUploads>,
         @InjectRepository(registeredStudent) private readonly reg: Repository<registeredStudent>,
         @InjectRepository(DocsRequirement) private readonly docReq: Repository<DocsRequirement>
@@ -140,6 +142,18 @@ export class staffRepository extends Repository<FacultyStaff> {
 
         await this.docUploads.save(doc);
 
+        //SSE to frontend to mutate upload row records on student facing app
+        this.sseService.emitDocumentUpdate({
+            studentId: doc.student.id,
+            sessionId: doc.registration.acadSession.id,
+            payload: {
+                documentTypeId: doc.documentType,
+                fileName: doc.fileName,
+                status: doc.status, // APPROVED | REJECTED
+            },
+        });
+
+
         if (action === uploadStatus.REJECTED) {
             try {
                 const stuMail = await this.getStuMail(doc.id);                
@@ -160,7 +174,6 @@ export class staffRepository extends Repository<FacultyStaff> {
             where: { id: doc.registration.id },
             relations: ['student']
         });
-
         await this.changeRegStatus(registration);
 
         return {message: 'Document reviewed successfully'};

@@ -5,13 +5,14 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { academicSession } from './Entities/Academic-Session.entity';
 import { documentUploads } from './Entities/Student-Uploads.entity';
 import { registeredStudent } from './Entities/Registration.entity';
+import { SseService } from 'src/sse/sse.service';
 
 @Module({
   imports: [    
     TypeOrmModule.forFeature([academicSession, documentUploads, registeredStudent])
   ],
   controllers: [SessionController],
-  providers: [SessionService],
+  providers: [SessionService, SseService],
   exports: [TypeOrmModule]
 })
 export class SessionModule {}

@@ -5,6 +5,7 @@ import { UserModule } from './user/user.module';
 import { DocumentRequirementModule } from './document-requirement/document-requirement.module';
 import { SessionModule } from './session/session.module';
 import { AuthModule } from './auth/auth.module';
+import { SseModule } from './sse/sse.module';
 
 
 @Module({
@@ -14,6 +15,7 @@ import { AuthModule } from './auth/auth.module';
     DocumentRequirementModule,
     SessionModule,
     AuthModule,
+    SseModule,
   ],  
 })
 export class AppModule {}
