@@ -3,6 +3,7 @@ import { IsEnum, IsNotEmpty, IsEmail, IsString, IsNumberString, IsInt } from 'cl
 import { ModeOfEntry } from '../Entities/student.entity';
 import { Type } from "class-transformer";
 import { Department } from "../Entities/enum";
+import { Status } from "src/session/Entities/Registration.entity";
 
 export class CreateStudentDto {
     @IsNotEmpty()
@@ -41,4 +42,27 @@ export class CreateStudentDto {
     @Type(() => Number)
     @IsInt()
     level: number;
+}
+
+export class studentDashboardDto {
+    @IsNotEmpty()
+    studentName: string;
+
+    @IsNotEmpty()
+    academicSession: string;
+
+    @IsNotEmpty()
+    registrationStatus: Status;
+
+    @IsNotEmpty()
+    registrationCompletedCount: number;
+
+    @IsNotEmpty()
+    documentsRequiredCount: number;
+
+    @IsNotEmpty()
+    documentsUploadedCount: number;
+
+    @IsNotEmpty()
+    documentsApprovedCount: number;
 }

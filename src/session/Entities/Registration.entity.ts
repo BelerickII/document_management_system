@@ -4,6 +4,7 @@ import { documentUploads } from "./Student-Uploads.entity";
 import { Column, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn, Unique } from "typeorm";
 
 export enum Status{
+    NOT_ASSIGNED = 'N/A',
     NOT_STARTED = 'Not Started',
     ONGOING = 'Ongoing',
     COMPLETED = 'Completed',
