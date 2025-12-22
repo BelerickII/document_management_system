@@ -1,5 +1,5 @@
 import { DataSource, Repository } from "typeorm";
-import { BadRequestException, Injectable, Logger, NotFoundException } from "@nestjs/common";
+import { BadRequestException, ForbiddenException, Injectable, Logger, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 
 import { documentGateway } from "../Others/staff.gateway";
@@ -10,6 +10,7 @@ import { emailService } from "../Others/email.service";
 import { registeredStudent, Status } from "src/session/Entities/Registration.entity";
 import { DocsRequirement } from "src/document-requirement/Entities/docsRequiement.entity";
 import { SseService } from "src/sse/sse.service";
+import path from "path";
 
 @Injectable()
 export class staffRepository extends Repository<FacultyStaff> {
@@ -29,6 +30,7 @@ export class staffRepository extends Repository<FacultyStaff> {
 
     private LOCK_DURATION_MS = 5 * 60 * 1000;
 
+    //this method get all uploaded documents by student with status as "PENDING"
     async getUploadedDocs(page = 1, limit = 50) {
         const parsedPage = !isNaN(page) && page> 0 ? page: 1;
         const parsedLimit = !isNaN(limit) && limit> 0 ? limit: 50;
@@ -68,7 +70,7 @@ export class staffRepository extends Repository<FacultyStaff> {
     }
 
     //this is the method that handle the view modal on the frontend application
-    async lockDocument (documentId: number, staffId: number): Promise<string> {
+    async lockDocument (documentId: number, staffId: number): Promise<number> {
         const doc = await this.docUploads.findOne({ where: {id: documentId } });
         if (!doc) throw new BadRequestException('Document not found');
 
@@ -79,13 +81,14 @@ export class staffRepository extends Repository<FacultyStaff> {
 
         doc.lockedBy = staffId;
         doc.lockedAt = new Date();
-
         await this.docUploads.save(doc);
 
         //Broadcast lock
         this.gateway.emitDocumentLocked(doc.id, staffId);
 
-        return doc.filePath;
+        //sanitize the filePath from the DB
+        // const fileUrl = doc.filePath.replace(/\\/g, '/'); | `/${fileUrl}`
+        return doc.id;
     }
 
     //frontend calls this method if there's no approval within some minutes
@@ -101,6 +104,18 @@ export class staffRepository extends Repository<FacultyStaff> {
 
         await this.docUploads.save(doc);
         this.gateway.emitDocumentUnlocked(documentId);
+    }
+
+    //this method streams the selected file to the frontend and allows a staff to view it
+    async viewDoc(documentId: number, staffId: number): Promise<string> {
+        const doc = await this.docUploads.findOne({ where: { id: documentId }, relations: ['student']});
+
+        if(doc?.lockedBy !== staffId) {
+            throw new ForbiddenException('You do not have access to this document');
+        }
+
+        const absolutePath = path.resolve(doc.filePath);
+        return absolutePath;
     }
 
     //this method handles the approval or rejection of an uploaded document

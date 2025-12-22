@@ -34,7 +34,8 @@ export class SessionController {
                 filename: (req, file, callback) => {
                     const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
                     const ext = extname(file.originalname);
-                    callback(null, `${file.filename}-${uniqueSuffix}${ext}`);
+                    const baseName = file.originalname.replace(ext, '');
+                    callback(null, `${baseName}-${uniqueSuffix}${ext}`);
                 },
             }),
             limits: { fileSize: 8 * 1024 * 1024 },
@@ -62,7 +63,8 @@ export class SessionController {
                 filename: (req, file, callback) => {
                     const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
                     const ext = extname(file.originalname);
-                    callback(null, `${file.filename}-${uniqueSuffix}${ext}`);
+                    const baseName = file.originalname.replace(ext, '');
+                    callback(null, `${baseName}-${uniqueSuffix}${ext}`);
                 },
             }),
             limits: { fileSize: 8 * 1024 * 1024 },

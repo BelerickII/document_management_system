@@ -1,4 +1,4 @@
-import { BadRequestException, Body, Controller, Get, Param, ParseIntPipe, Patch, Post, Query, Req, UploadedFile, UseGuards, UseInterceptors, UsePipes, ValidationPipe } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, Param, ParseIntPipe, Patch, Post, Query, Req, Res, UploadedFile, UseGuards, UseInterceptors, UsePipes, ValidationPipe } from '@nestjs/common';
 import { UserService } from './user.service';
 import { FileInterceptor } from '@nestjs/platform-express';
 
@@ -44,7 +44,7 @@ export class UserController {
         return this.userService.createAdmin(dto)
     }
 
-    //Handler hit when the staff clicks on the view button of an uploaded document
+    //Handler hit when the staff clicks on the view button of an uploaded document, allows a staff to lock a document and remove it from the pool with websocket
     @Patch(':id/lock')
     @UseGuards(AuthGuard('jwt'))
     async lockDocument (@Param('id', ParseIntPipe) id: number, @Req() req: any) {
@@ -75,9 +75,29 @@ export class UserController {
         return this.userService.reviewDocument(documentId, staffId, action, body.comment);
     }
 
+    //Handler that return the document to the available pool if the staff doesn't perform an action within a timeframe
     @Patch(':id/lock-expired')
     unlockExpired(@Param('id', ParseIntPipe) id: number) {
         return this.userService.unlockExpired(id);
+    }
+
+    //Handler that allows a staff to view an uploaded document
+    @Get(':id/view')
+    @UseGuards(AuthGuard('jwt'))
+    async viewDocument (@Param('id', ParseIntPipe) id: number, @Res() res, @Req() req: any) {
+        const documentId = id;        
+        const staffId = req.user.id;             
+        if (!staffId) throw new BadRequestException('Unauthenicated');
+
+        const filePath = await this.userService.viewDoc(documentId, staffId);
+        return res.sendFile(filePath);
+    }
+
+    @Get('student-dashboard')
+    @UseGuards(AuthGuard('jwt'))
+    async getStudentDashboard(@Req() req) {
+        const studentId = req.user.id;
+        return this.userService.studentDashboard(studentId);
     }
 
     //Handler for getting user by email, matric no & staff id
