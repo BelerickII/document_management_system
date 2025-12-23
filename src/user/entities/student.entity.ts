@@ -4,6 +4,7 @@ import { StudentDepartment } from "src/document-requirement/Entities/Department.
 import { Department } from "./enum";
 import { registeredStudent } from "src/session/Entities/Registration.entity";
 import { documentUploads } from "src/session/Entities/Student-Uploads.entity";
+import { Notification } from "src/session/Entities/Notification.entity";
 
 export enum ModeOfEntry {
     UTME = 'Utme',
@@ -20,7 +21,7 @@ export class Student {
     @JoinColumn()
     user: User;
 
-    @ManyToOne(() => StudentDepartment, dept => dept.student)
+    @ManyToOne(() => StudentDepartment, (dept) => dept.student)
     @JoinColumn()
     dept: StudentDepartment;
 
@@ -29,6 +30,9 @@ export class Student {
 
     @OneToMany(() => documentUploads, (docUpload) => docUpload.student)
     docUpload: documentUploads[];
+
+    @OneToMany(() => Notification, (notifications) => notifications.student)
+    notifications: Notification[];
 
     @Column({
         type: "varchar",        

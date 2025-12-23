@@ -11,6 +11,7 @@ import { registeredStudent, Status } from "src/session/Entities/Registration.ent
 import { DocsRequirement } from "src/document-requirement/Entities/docsRequiement.entity";
 import { SseService } from "src/sse/sse.service";
 import path from "path";
+import { Notification } from "src/session/Entities/Notification.entity";
 
 @Injectable()
 export class staffRepository extends Repository<FacultyStaff> {
@@ -19,6 +20,7 @@ export class staffRepository extends Repository<FacultyStaff> {
         private readonly gateway: documentGateway,
         private readonly mailService: emailService,
         private readonly sseService: SseService,
+        @InjectRepository(Notification) private readonly notice: Repository<Notification>,
         @InjectRepository(documentUploads) private readonly docUploads: Repository<documentUploads>,
         @InjectRepository(registeredStudent) private readonly reg: Repository<registeredStudent>,
         @InjectRepository(DocsRequirement) private readonly docReq: Repository<DocsRequirement>
@@ -126,7 +128,7 @@ export class staffRepository extends Repository<FacultyStaff> {
 
         const doc = await this.docUploads.findOne({ 
             where: { id: documentId},
-            relations: ['registration', 'registration.student']
+            relations: ['student','registration', 'registration.acadSession']
         });
         if (!doc) throw new NotFoundException('Document not found');
 
@@ -178,7 +180,18 @@ export class staffRepository extends Repository<FacultyStaff> {
                     await this.mailService.sendRejectionEmail(stuMail, stuName, doc.Comment || '', doc.documentType)
                 } else {
                     this.logger.warn(`No email found for studentId: ${doc.student}`);
-                }                
+                }
+                
+                //this create the notification message shown in the frontend
+                const notification = this.notice.create({
+                    title: `${doc.documentType} Rejected`,
+                    message: `${doc.Comment}`,
+                    student: doc.student,
+                    createdAt: new Date(),
+                    isRead: false
+                });
+                await this.notice.save(notification);
+                
             } catch (error) {
                 this.logger.error('Failed to send rejection email: ' + error?.message);
             }

@@ -6,10 +6,11 @@ import { academicSession } from './Entities/Academic-Session.entity';
 import { documentUploads } from './Entities/Student-Uploads.entity';
 import { registeredStudent } from './Entities/Registration.entity';
 import { SseService } from 'src/sse/sse.service';
+import { Notification } from './Entities/Notification.entity';
 
 @Module({
   imports: [    
-    TypeOrmModule.forFeature([academicSession, documentUploads, registeredStudent])
+    TypeOrmModule.forFeature([academicSession, documentUploads, registeredStudent, Notification])
   ],
   controllers: [SessionController],
   providers: [SessionService, SseService],

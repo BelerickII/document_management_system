@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, InternalServerErrorException } from '@nestjs/common';
+import { BadRequestException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { DataSource } from 'typeorm';
@@ -11,12 +11,14 @@ import { documentUploads, uploadStatus } from './Entities/Student-Uploads.entity
 import { DocsRequirement } from 'src/document-requirement/Entities/docsRequiement.entity';
 import { registeredStudent, Status } from './Entities/Registration.entity';
 import { SseService } from 'src/sse/sse.service';
+import { Notification } from './Entities/Notification.entity';
 
 @Injectable()
 export class SessionService {
  constructor (
         private readonly dataSource: DataSource,
         private readonly sseService: SseService,
+        @InjectRepository(Notification) private readonly notice: Repository<Notification>,
         @InjectRepository(documentUploads) private readonly uploads: Repository<documentUploads>,
         @InjectRepository(academicSession) private readonly acadSession: Repository<academicSession>,
     ) {}
@@ -230,5 +232,28 @@ export class SessionService {
         await this.uploads.save(existingDoc);
 
         return { message: 'Document sucessfully overwritten' };
+    }
+
+    //Logic that marks a single notification as read
+    async markAsRead(notificationId: number, studentId: number) {
+        const notification = await this.notice.findOne({
+            where: {
+                id: notificationId, 
+                student: { user: {id: studentId} }
+            },
+        });
+        if(!notification) throw new NotFoundException('Notification not found');
+
+        notification.isRead = true;
+        return this.notice.save(notification);
+    }
+
+    //Logic that marks all notifications as read
+    async markAllAsRead(studentId: number) {
+        await this.notice.update(
+            { student: { user: {id: studentId} }, isRead: false},
+            { isRead: true } 
+        );
+        return { success: true };
     }
 }

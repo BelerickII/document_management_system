@@ -23,7 +23,8 @@ export class Notification {
     
     @Column({
         type: 'date',
-        nullable: false
+        nullable: false,
+        onUpdate: 'CURRENT_DATE'
     })
     createdAt: Date;
     

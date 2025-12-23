@@ -11,6 +11,7 @@ import { registeredStudent, Status } from 'src/session/Entities/Registration.ent
 import { DocsRequirement } from 'src/document-requirement/Entities/docsRequiement.entity';
 import { documentUploads, uploadStatus } from 'src/session/Entities/Student-Uploads.entity';
 import { studentDashboardDto } from '../Dto/create-student.dto';
+import { Notification } from 'src/session/Entities/Notification.entity';
 
 @Injectable()
 export class studentRepository extends Repository<Student> {
@@ -21,6 +22,7 @@ export class studentRepository extends Repository<Student> {
         @InjectRepository(registeredStudent) private readonly regRepo: Repository<registeredStudent>,
         @InjectRepository(DocsRequirement) private readonly docReq: Repository<DocsRequirement>,
         @InjectRepository(documentUploads) private readonly docUploads: Repository<documentUploads>,
+        @InjectRepository(Notification) private readonly notice: Repository<Notification>,
         private readonly docReqService: DocumentRequirementService,
         readonly dataSource: DataSource, 
     ) {
@@ -107,6 +109,7 @@ export class studentRepository extends Repository<Student> {
        let docsRequiredCount: number = 0;
        let docsUploadedCount: number = 0;
        let docsApprovedCount: number = 0; //you'll need to add this to the student UI design
+       let getUnreadNotifications: { data: Notification[]; count: number; } = { data: [], count: 0};
        let registrationCompletion = await this.regRepo.count({
             where: { 
                 student: { id: student.id }, 
@@ -126,7 +129,7 @@ export class studentRepository extends Repository<Student> {
                 where: {
                     student: { id: student.id },
                     acadSession: { id: activeSession.id }
-                }                
+                }, relations: ['student']           
             });
 
             if (registration) {
@@ -147,6 +150,9 @@ export class studentRepository extends Repository<Student> {
                         status: uploadStatus.APPROVED,
                     },
                 });
+
+                //get the notification messages for a student                
+                getUnreadNotifications = await this.getNotifications(student.id);
 
                 const stuCategoryId = registration?.student.categoryId;
                 if(!stuCategoryId) throw new BadRequestException("Student category missing");
@@ -171,7 +177,23 @@ export class studentRepository extends Repository<Student> {
         documentsRequiredCount: docsRequiredCount,
         documentsUploadedCount: docsUploadedCount,
         documentsApprovedCount: docsApprovedCount,
+        getNotifications: getUnreadNotifications
        };
+    }
+
+    //Helper to fetch only UNREAD notifications of the logged-in student
+    async getNotifications(studentId: number): Promise<{ data: Notification[]; count: number }> {    
+        const notifications = await this.notice.find({
+            where: {
+                student: { id: studentId },
+                isRead: false,
+            }, order: { createdAt: 'DESC' },
+        });
+        
+        return {
+        data: notifications,
+        count: notifications.length, 
+        };
     }
 
 }

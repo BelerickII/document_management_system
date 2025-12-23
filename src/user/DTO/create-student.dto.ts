@@ -4,6 +4,7 @@ import { ModeOfEntry } from '../Entities/student.entity';
 import { Type } from "class-transformer";
 import { Department } from "../Entities/enum";
 import { Status } from "src/session/Entities/Registration.entity";
+import { Notification } from "src/session/Entities/Notification.entity";
 
 export class CreateStudentDto {
     @IsNotEmpty()
@@ -64,5 +65,8 @@ export class studentDashboardDto {
     documentsUploadedCount: number;
 
     @IsNotEmpty()
-    documentsApprovedCount: number;
+    documentsApprovedCount: number; 
+
+    @IsNotEmpty()
+    getNotifications: { data: Notification[]; count: number };
 }

@@ -1,4 +1,4 @@
-import { BadGatewayException, Body, Controller, Param, Patch, Post, Req, UploadedFile, UseGuards, UseInterceptors, UsePipes, ValidationPipe } from '@nestjs/common';
+import { BadGatewayException, Body, Controller, Param, Patch, Post, Req, UploadedFile, UseGuards, UseInterceptors, UsePipes, ValidationPipe, ParseIntPipe } from '@nestjs/common';
 import { SessionService } from './session.service';
 import { academicSessionDto, uploadDocDto } from './Dto/create-session.dto';
 
@@ -85,5 +85,21 @@ export class SessionController {
     ) {
         const studentId = req.user?.id;
         return this.sessionService.stuReupload(file, documentId, studentId)
+    }
+
+    //Triggered when "read" button is clicked
+    @Patch(':id/read')
+    @UseGuards(AuthGuard('jwt'))
+    async markOneAsRead(@Param('id', ParseIntPipe) id: number, @Req() req: any) {
+        const studentId = req.user.id;
+        return this.sessionService.markAsRead(id, studentId);
+    }
+
+    //Triggered when "mark all as read" is clicked
+    @Patch('mark-all')
+    @UseGuards(AuthGuard('jwt'))
+    async markAllAsRead(@Req() req: any) {
+        const studentId = req.user.id;
+        return this.sessionService.markAllAsRead(studentId);
     }
 }
