@@ -93,11 +93,20 @@ export class UserController {
         return res.sendFile(filePath);
     }
 
+    //Handler that handles the student dashboard
     @Get('student-dashboard')
     @UseGuards(AuthGuard('jwt'))
     async getStudentDashboard(@Req() req) {
         const studentId = req.user.id;
         return this.userService.studentDashboard(studentId);
+    }
+
+    //Handler that handles the staff dashboard
+    @Get('staff-dashboard')
+    @UseGuards(AuthGuard('jwt'))
+    async getStaffDashboard(@Req() req) {
+        const staffId = req.user.id;
+        return this.userService.staffDashboard(staffId);
     }
 
     //Handler for getting user by email, matric no & staff id

@@ -179,10 +179,7 @@ export class UserService {
             //create user + student record using the existing method above
             const student = await this.createStudentWithUser(dto);
 
-            return{
-                message:'Student created successfully',
-                student,
-            };
+            return{ message:'Student created successfully' };
                        
         } catch (error) {
             this.logger.error('Error creating student record', error);
@@ -301,6 +298,11 @@ export class UserService {
     async updateUser(user: User) {
         return this.userRepo.save(user);
     }
+
+    //student dashboard
+    async studentDashboard(studentId: number) {
+        return this.studentRepo.studentDashboardOverview(studentId);
+    }
  
     //STAFF ASPECT
     async getAllUploadedDocs (page: number, limit: number) {
@@ -313,5 +315,17 @@ export class UserService {
 
     async reviewDocument(documentId: number, staffId: number, action: uploadStatus, comment?: string) {
         return this.staffRepo.reviewDocument(documentId, staffId, action, comment);
+    }
+
+    async unlockExpired(documentId: number) {
+        return this.staffRepo.unlockIfExpired(documentId);
+    }
+
+    async viewDoc(documentId: number, staffId: number) {
+        return this.staffRepo.viewDoc(documentId, staffId)
+    }
+
+    async staffDashboard(staffId: number) {
+        return this.staffRepo.staffDashboardOverview(staffId);
     }
 }

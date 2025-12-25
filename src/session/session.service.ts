@@ -12,12 +12,14 @@ import { DocsRequirement } from 'src/document-requirement/Entities/docsRequiemen
 import { registeredStudent, Status } from './Entities/Registration.entity';
 import { SseService } from 'src/sse/sse.service';
 import { Notification } from './Entities/Notification.entity';
+import { staffRepository } from 'src/user/Repositories/faculty-staff.repository';
 
 @Injectable()
 export class SessionService {
  constructor (
         private readonly dataSource: DataSource,
         private readonly sseService: SseService,
+        private readonly staffRepo: staffRepository,
         @InjectRepository(Notification) private readonly notice: Repository<Notification>,
         @InjectRepository(documentUploads) private readonly uploads: Repository<documentUploads>,
         @InjectRepository(academicSession) private readonly acadSession: Repository<academicSession>,
@@ -203,6 +205,7 @@ export class SessionService {
             });
 
             await queryRunner.commitTransaction();
+            await this.staffRepo.checkAndNotifyStaff();
             return savedUpload;
 
         } catch (error) {
@@ -222,6 +225,7 @@ export class SessionService {
         if (!existingDoc) throw new BadRequestException('Rejected document not found');
 
         //Overwrite the existing record
+        existingDoc.fileName = file.filename;
         existingDoc.filePath = `uploads/${file.filename}`;
         existingDoc.status = uploadStatus.PENDING;
         existingDoc.Comment = null;

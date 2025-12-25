@@ -1,6 +1,7 @@
 import { Column, Entity, Index, JoinColumn, OneToMany, OneToOne, PrimaryGeneratedColumn } from "typeorm";
 import { User } from "./user.entity";
 import { documentUploads } from "src/session/Entities/Student-Uploads.entity";
+import { Notification } from "src/session/Entities/Notification.entity";
 
 @Entity()
 export class FacultyStaff {
@@ -12,7 +13,10 @@ export class FacultyStaff {
     user: User;
 
     @OneToMany(() => documentUploads, (document) => document.staff)
-    document: documentUploads;
+    document: documentUploads[];
+
+    @OneToMany(() => Notification, (notifications) => notifications.staff)
+    notifications: Notification[];
 
     @Column({
         type: "varchar",        

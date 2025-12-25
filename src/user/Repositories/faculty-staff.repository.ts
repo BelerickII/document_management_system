@@ -1,4 +1,4 @@
-import { DataSource, Repository } from "typeorm";
+import { DataSource, In, Repository } from "typeorm";
 import { BadRequestException, ForbiddenException, Injectable, Logger, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 
@@ -12,6 +12,8 @@ import { DocsRequirement } from "src/document-requirement/Entities/docsRequiemen
 import { SseService } from "src/sse/sse.service";
 import path from "path";
 import { Notification } from "src/session/Entities/Notification.entity";
+import { staffDashboardDto } from "../Dto/create-faculty-staff.dto";
+import { Student } from "../Entities/student.entity";
 
 @Injectable()
 export class staffRepository extends Repository<FacultyStaff> {
@@ -20,6 +22,8 @@ export class staffRepository extends Repository<FacultyStaff> {
         private readonly gateway: documentGateway,
         private readonly mailService: emailService,
         private readonly sseService: SseService,
+        @InjectRepository(Student) private readonly stu: Repository<Student>,
+        @InjectRepository(academicSession) private readonly sessionRepo: Repository<academicSession>,
         @InjectRepository(Notification) private readonly notice: Repository<Notification>,
         @InjectRepository(documentUploads) private readonly docUploads: Repository<documentUploads>,
         @InjectRepository(registeredStudent) private readonly reg: Repository<registeredStudent>,
@@ -268,4 +272,119 @@ export class staffRepository extends Repository<FacultyStaff> {
 
         await this.reg.save(registration); //Foolish me forgot this line and was wondering what was going on lmao
     }
+
+    //Logic to send notification batch to staffs when uploaded documents reach a threshold
+    async checkAndNotifyStaff(): Promise<void> {
+        const uploadCount = await this.docUploads.count({
+            where: { status: uploadStatus.PENDING }
+        });
+
+        if (uploadCount > 0 && uploadCount % 115 === 0) {
+            await this.sendNotificationToStaff(uploadCount);
+        }
+    }
+
+    //This method is called by the method above
+    private async sendNotificationToStaff(count: number) {
+        const allStaff = await this.find();
+
+        const notifications = allStaff.map((staff) => {
+            return this.notice.create({
+                title: 'Document Batch Alert',
+                message: `New set of ${count} documents have been uploaded. Please review the new batch.`,
+                createdAt: new Date(),
+                isRead: false,
+                staff: staff                
+            });
+        });
+        await this.notice.save(notifications);
+    }
+
+    //Logic that fetches information dynamically on the staffdashboard
+    async staffDashboardOverview(staffId: number): Promise<staffDashboardDto> {
+        const [staff, activeSession] = await Promise.all([
+        this.findOne({ where: {user: {id: staffId} }, relations: ['user'] }),
+        this.sessionRepo.findOne({ where: {isActive: true} }),
+       ]);
+
+       if (!staff) throw new NotFoundException('Staff not found');
+
+       //Default values if is no active session yet
+       let sessionName: string = 'N/A'
+       const staffName: string = staff.user.firstName;
+       let totalDocsUploaded: number = 0;
+       let totalStuRegistered: number = 0;
+       let totalAtvStudent: number = 0;
+       let pendingDocs: number = 0;
+       let docsReviewed: number = 0;
+       let getUnreadNotifications: { data: Notification[]; count: number; } = { data: [], count: 0};
+
+       if(activeSession) {
+        sessionName = activeSession.sessionId;
+        getUnreadNotifications = await this.getNotifications(staff.id);
+        totalDocsUploaded = await this.docUploads.count({
+            where: { 
+                status: In(['Approved', 'Pending']), 
+                registration: { acadSession: activeSession} 
+            }, relations: ['registration']
+        });
+        
+        totalStuRegistered = await this.reg.count({
+            where: {
+                status: Status.COMPLETED,
+                acadSession: activeSession
+            }
+        });
+
+        totalAtvStudent = await this.stu.count({
+            where: {
+                graduated: false,
+                academicSession: activeSession.sessionId,
+            }
+        });
+
+        pendingDocs = await this.docUploads.count({
+            where: { 
+                status: uploadStatus.PENDING,
+                registration: { acadSession: activeSession}
+            }, relations: ['registration']
+        });
+
+        docsReviewed = await this.docUploads.count({
+            where: {
+                staff: staff,
+                status: uploadStatus.APPROVED,
+                registration: { acadSession: activeSession}
+            }, relations: ['registration']
+        });
+
+       }
+
+       return {
+        staffName: staffName,
+        academicSession: sessionName,
+        totalDocumentsUploaded: totalDocsUploaded,
+        totalStudentRegistered: totalStuRegistered,
+        totalActiveStudent: totalAtvStudent,
+        pendingDocument: pendingDocs,
+        documentsReviewed: docsReviewed,
+        getNotifications: getUnreadNotifications
+       }
+    }
+
+    //Helper to fetch only UNREAD notifications of the logged-in staffs
+    async getNotifications(staffId: number): Promise<{ data: Notification[]; count: number }> {    
+        const notifications = await this.notice.find({
+            where: {
+                staff: { id: staffId },
+                isRead: false,
+            }, order: { createdAt: 'DESC' },
+        });
+        
+        return {
+        data: notifications,
+        count: notifications.length, 
+        };
+    }
+    
 }

@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { UserController } from './user.controller';
 import { UserService } from './user.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -21,7 +21,7 @@ import { SseService } from 'src/sse/sse.service';
   imports: [
     TypeOrmModule.forFeature([User, FacultyStaff, Student]),
     DocumentRequirementModule,
-    SessionModule,
+    forwardRef(() => SessionModule)
   ],
   controllers: [UserController],
   providers: [
@@ -31,9 +31,9 @@ import { SseService } from 'src/sse/sse.service';
     UserService,
     documentGateway,
     emailService,
-    SseService
+    SseService,
   ],
-  exports: [UserService, TypeOrmModule, studentRepository]
+  exports: [UserService, TypeOrmModule, studentRepository, staffRepository, documentGateway, emailService]
 })
 
 export class UserModule {}
