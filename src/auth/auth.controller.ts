@@ -2,14 +2,15 @@ import { Body, Controller, Post, Req, UseGuards, UsePipes, ValidationPipe } from
 import { AuthService } from './auth.service';
 import { logInDto } from './Dto/login.dto';
 import { ResetPwdDto } from './Dto/resetPwd.dto';
-import { AuthGuard } from '@nestjs/passport';
+import { LocalAuthGaurd } from './gaurds/local-auth.guard';
+import { JwtAuthGaurd } from './gaurds/jwt-auth.guard';
 
 @Controller('auth')
 export class AuthController {
     constructor(private readonly authService: AuthService) {}
 
     @Post('login')
-    @UseGuards(AuthGuard('local'))
+    @UseGuards(LocalAuthGaurd)
     @UsePipes(ValidationPipe)
     async login(@Body() dto: logInDto) {
         //calling 2 methods in one endpoint xD
@@ -20,10 +21,10 @@ export class AuthController {
     }
 
     @Post('reset-password')
-    @UseGuards(AuthGuard('jwt'))
+    @UseGuards(JwtAuthGaurd)
     @UsePipes(ValidationPipe)
     async resetPwd(@Req() req, @Body() dto: ResetPwdDto) {        
-        const id: number = req.user.sub;
+        const id: number = req.user.id;
         return this.authService.resetPwd(id, dto.newPassword)
     }
 }

@@ -23,8 +23,8 @@ import { DocumentRequirementModule } from 'src/document-requirement/document-req
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: async (config: ConfigService) => ({
-        secret: config.get<string>('JWT_SECRET') ||'supersecret',
-        signOptions: { expiresIn: config.get<string>('JWT_EXPIRES_IN', '1h') as any },
+        secret: config.get<string>('JWT_SECRET'),
+        signOptions: { expiresIn: config.get<string>('JWT_EXPIRES_IN') as any },
       }),
     }),
   ],

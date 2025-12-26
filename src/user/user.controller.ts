@@ -6,8 +6,11 @@ import { reviewDto } from './Dto/review.dto';
 import { CreateStudentDto } from './Dto/create-student.dto';
 import { CreateFacultyDto } from './Dto/create-faculty-staff.dto';
 import { CreateUserDto } from './Dto/create-user.dto';
-import { User } from './Entities/user.entity';
+import { User, UserRole } from './Entities/user.entity';
 import { AuthGuard } from '@nestjs/passport';
+import { Roles } from 'src/auth/gaurds/roles.decorator';
+import { JwtAuthGaurd } from 'src/auth/gaurds/jwt-auth.guard';
+import { RolesGuard } from 'src/auth/gaurds/roles.gaurd';
 
 
 @Controller('user')
@@ -18,6 +21,8 @@ export class UserController {
 
     //Handler for the upload CSV of students
     @Post('admin/student-csv')
+    @Roles(UserRole.ADMIN)
+    @UseGuards(JwtAuthGaurd, RolesGuard)
     @UseInterceptors(FileInterceptor('file'))
     async uploadstudentsCsv(@UploadedFile() file: Express.Multer.File) {
         return this.userService.uploadstudentsCsv(file);        
@@ -25,6 +30,8 @@ export class UserController {
 
     //Handler for creating a single student
     @Post('admin/create-student')
+    @Roles(UserRole.ADMIN)
+    @UseGuards(JwtAuthGaurd, RolesGuard)
     @UsePipes(ValidationPipe)
     async createStudent(@Body() dto: CreateStudentDto) {
         return this.userService.createSingleStudent(dto);
@@ -32,6 +39,8 @@ export class UserController {
 
     //Handler for creating a staff
     @Post('admin/create-staff')
+    @Roles(UserRole.ADMIN)
+    @UseGuards(JwtAuthGaurd, RolesGuard)
     @UsePipes(ValidationPipe)
     async createStaff(@Body() dto: CreateFacultyDto) {
         return this.userService.createStaff(dto);
@@ -39,6 +48,8 @@ export class UserController {
 
     //Handler for creating an admin
     @Post('admin/create-admin')
+    @Roles(UserRole.ADMIN)
+    @UseGuards(JwtAuthGaurd, RolesGuard)
     @UsePipes(ValidationPipe)
     async createAdmin (@Body() dto: CreateUserDto) {
         return this.userService.createAdmin(dto)
@@ -46,7 +57,8 @@ export class UserController {
 
     //Handler hit when the staff clicks on the view button of an uploaded document, allows a staff to lock a document and remove it from the pool with websocket
     @Patch(':id/lock')
-    @UseGuards(AuthGuard('jwt'))
+    @Roles(UserRole.STAFF)
+    @UseGuards(JwtAuthGaurd, RolesGuard)
     async lockDocument (@Param('id', ParseIntPipe) id: number, @Req() req: any) {
         const documentId = id;        
         const staffId: number = req.user.id;
@@ -58,7 +70,8 @@ export class UserController {
 
     //Handler hit when the staff Accept/Reject the viewed document
     @Patch(':id/review')
-    @UseGuards(AuthGuard('jwt'))
+    @Roles(UserRole.STAFF)
+    @UseGuards(JwtAuthGaurd, RolesGuard)
     async reviewDoc (@Param('id', ParseIntPipe) id: number, @Body() body: reviewDto, @Req() req: any) {
         const documentId = id;
         const staffId: number = req.user.id;
@@ -77,13 +90,16 @@ export class UserController {
 
     //Handler that return the document to the available pool if the staff doesn't perform an action within a timeframe
     @Patch(':id/lock-expired')
+    @Roles(UserRole.STAFF)
+    @UseGuards(JwtAuthGaurd, RolesGuard)
     unlockExpired(@Param('id', ParseIntPipe) id: number) {
         return this.userService.unlockExpired(id);
     }
 
     //Handler that allows a staff to view an uploaded document
     @Get(':id/view')
-    @UseGuards(AuthGuard('jwt'))
+    @Roles(UserRole.STAFF)
+    @UseGuards(JwtAuthGaurd, RolesGuard)
     async viewDocument (@Param('id', ParseIntPipe) id: number, @Res() res, @Req() req: any) {
         const documentId = id;        
         const staffId = req.user.id;             
@@ -95,7 +111,8 @@ export class UserController {
 
     //Handler that handles the student dashboard
     @Get('student-dashboard')
-    @UseGuards(AuthGuard('jwt'))
+    @Roles(UserRole.STUDENT)
+    @UseGuards(JwtAuthGaurd, RolesGuard)
     async getStudentDashboard(@Req() req) {
         const studentId = req.user.id;
         return this.userService.studentDashboard(studentId);
@@ -103,7 +120,8 @@ export class UserController {
 
     //Handler that handles the staff dashboard
     @Get('staff-dashboard')
-    @UseGuards(AuthGuard('jwt'))
+    @Roles(UserRole.STAFF)
+    @UseGuards(JwtAuthGaurd, RolesGuard)
     async getStaffDashboard(@Req() req) {
         const staffId = req.user.id;
         return this.userService.staffDashboard(staffId);
@@ -111,26 +129,33 @@ export class UserController {
 
     //Handler for getting user by email, matric no & staff id
     @Get('search')
+    @Roles(UserRole.ADMIN)
+    @UseGuards(JwtAuthGaurd, RolesGuard)
     async searchUsers(@Query('query') searchTerm: string): Promise<User[]> {
         return this.userService.searchUsers(searchTerm)
     }
 
     //Handler for getting student uploaded documents
     @Get('uploads')
+    @Roles(UserRole.STAFF)
+    @UseGuards(JwtAuthGaurd, RolesGuard)
     async getAllUploadedDocs(@Query('page') page = '1', @Query('limit') limit ='50') {
         return this.userService.getAllUploadedDocs(+page, +limit)
     }
 
     //Handler for getting all users & filtering by role
     @Get()
+    @Roles(UserRole.ADMIN)
+    @UseGuards(JwtAuthGaurd, RolesGuard)
     async getAllUsers(@Query('page') page = '1', @Query('limit') limit ='50', @Query('role') role?: string) {
         return this.userService.getAllUsers(+page, +limit, role);
     }
 
     //Handler for getting a user details by ID
     @Get(':id')
+    @Roles(UserRole.ADMIN)
+    @UseGuards(JwtAuthGaurd, RolesGuard)
     async getUserById(@Param('id', ParseIntPipe) id: number): Promise<User> {
         return this.userService.getUserById(id)
     }
-
 }

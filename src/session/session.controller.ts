@@ -5,7 +5,10 @@ import { academicSessionDto, uploadDocDto } from './Dto/create-session.dto';
 import { extname } from 'path';
 import { diskStorage } from 'multer';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { AuthGuard } from '@nestjs/passport';
+import { Roles } from 'src/auth/gaurds/roles.decorator';
+import { UserRole } from 'src/user/Entities/user.entity';
+import { JwtAuthGaurd } from 'src/auth/gaurds/jwt-auth.guard';
+import { RolesGuard } from 'src/auth/gaurds/roles.gaurd';
 
 @Controller('session')
 export class SessionController {
@@ -13,6 +16,8 @@ export class SessionController {
 
     //Handler for creating new sessions
     @Post('create-session')
+    @Roles(UserRole.ADMIN)
+    @UseGuards(JwtAuthGaurd, RolesGuard)
     @UsePipes(ValidationPipe)
     async createSession(@Body() dto: academicSessionDto) {
         return this.sessionService.newSession(dto);
@@ -20,12 +25,16 @@ export class SessionController {
 
     //Handler to end a session
     @Post('end-session')
+    @Roles(UserRole.ADMIN)
+    @UseGuards(JwtAuthGaurd, RolesGuard)
     async endSession() {
         return this.sessionService.purgeSession()
     }
 
     //Handler that handles student uploads
     @Post('student/uploads')
+    @Roles(UserRole.STUDENT)
+    @UseGuards(JwtAuthGaurd, RolesGuard)
     @UsePipes(ValidationPipe)
     @UseInterceptors(
         FileInterceptor('file', {
@@ -55,7 +64,8 @@ export class SessionController {
 
     //Handler that permits students to overwrite pending/rejected documents
     @Patch(':documentId/overwrite')
-    @UseGuards(AuthGuard('jwt'))
+    @Roles(UserRole.STUDENT)
+    @UseGuards(JwtAuthGaurd, RolesGuard)
     @UseInterceptors(
         FileInterceptor('file', {
             storage: diskStorage({
@@ -89,7 +99,8 @@ export class SessionController {
 
     //Triggered when "read" button is clicked
     @Patch(':id/read')
-    @UseGuards(AuthGuard('jwt'))
+    @Roles(UserRole.STUDENT, UserRole.STAFF)
+    @UseGuards(JwtAuthGaurd, RolesGuard)
     async markOneAsRead(@Param('id', ParseIntPipe) id: number, @Req() req: any) {
         const studentId = req.user.id;
         return this.sessionService.markAsRead(id, studentId);
@@ -97,7 +108,8 @@ export class SessionController {
 
     //Triggered when "mark all as read" is clicked
     @Patch('mark-all')
-    @UseGuards(AuthGuard('jwt'))
+    @Roles(UserRole.STUDENT, UserRole.STAFF)
+    @UseGuards(JwtAuthGaurd, RolesGuard)
     async markAllAsRead(@Req() req: any) {
         const studentId = req.user.id;
         return this.sessionService.markAllAsRead(studentId);
