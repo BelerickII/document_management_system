@@ -1,12 +1,10 @@
-import { TypeOrmModuleOptions } from "@nestjs/typeorm";
+import * as Joi from 'joi';
 
-export const typeOrmConfig: TypeOrmModuleOptions = {
-    type: 'postgres',
-    host: 'localhost',
-    port: 5432,
-    username: 'postgres',
-    password: 'Samigud2003',
-    database: 'documentmanagementsystem',
-    entities: [__dirname + '/../**/*.entity.{js,ts}'],
-    synchronize: true,
-}
+export const validationSchema = Joi.object({
+    DB_HOST: Joi.string().required(),
+    DB_PORT: Joi.number().required(),
+    DB_USERNAME: Joi.string().required(),
+    DB_PASSWORD: Joi.string().required(),
+    DB_NAME: Joi.string().required(),
+    JWT_SECRET: Joi.string().required() 
+});

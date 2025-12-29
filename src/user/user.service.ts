@@ -296,7 +296,6 @@ export class UserService {
 
     //method to help update a user record on the DB after password reset
     async updateUser(user: User): Promise<void> {
-        console.log(user);
         await this.userRepo.save(user);
     }
 
