@@ -32,8 +32,6 @@ export class staffRepository extends Repository<FacultyStaff> {
         super(FacultyStaff, dataSource.createEntityManager());
     }
 
-    private readonly logger = new Logger('staffRepository');
-
     private LOCK_DURATION_MS = 5 * 60 * 1000;
 
     //this method get all uploaded documents by student with status as "PENDING"
@@ -98,7 +96,7 @@ export class staffRepository extends Repository<FacultyStaff> {
     }
 
     //frontend calls this method if there's no approval within some minutes
-    async unlockIfExpired(documentId: number) {
+    async unlockIfExpired(documentId: number): Promise<void> {
         const doc = await this.docUploads.findOne({ where: {id: documentId} });
         if (!doc || !doc.lockedAt) return;
 
@@ -125,7 +123,7 @@ export class staffRepository extends Repository<FacultyStaff> {
     }
 
     //this method handles the approval or rejection of an uploaded document
-    async reviewDocument(documentId: number, staffId: number, action: uploadStatus, comment?: string) {
+    async reviewDocument(documentId: number, staffId: number, action: uploadStatus, comment?: string): Promise<{message: string}> {
         //get the id of the staff reviewing the document        
         const staff = await this.findOne({ where: {user: {id: staffId}} }); //Took me a while to get the right query
         if (!staff) throw new NotFoundException('Staff is not found');
@@ -183,7 +181,7 @@ export class staffRepository extends Repository<FacultyStaff> {
                     //wanna mail the student that doc has been rejected
                     await this.mailService.sendRejectionEmail(stuMail, stuName, doc.Comment || '', doc.documentType)
                 } else {
-                    this.logger.warn(`No email found for studentId: ${doc.student}`);
+                    // this.logger.warn(`No email found for studentId: ${doc.student}`);
                 }
                 
                 //this create the notification message shown in the frontend
@@ -197,7 +195,7 @@ export class staffRepository extends Repository<FacultyStaff> {
                 await this.notice.save(notification);
                 
             } catch (error) {
-                this.logger.error('Failed to send rejection email: ' + error?.message);
+                // this.logger.error('Failed to send rejection email: ' + error?.message);
             }
 
         }
@@ -239,7 +237,7 @@ export class staffRepository extends Repository<FacultyStaff> {
     }
 
     //helper method to change the registration record status to "COMPLETED"
-    private async changeRegStatus (registration: registeredStudent | null) {
+    private async changeRegStatus (registration: registeredStudent | null): Promise<void> {
         const stuCategoryId = registration?.student.categoryId;
         if(!stuCategoryId) throw new BadRequestException("Student category missing");
 
@@ -285,7 +283,7 @@ export class staffRepository extends Repository<FacultyStaff> {
     }
 
     //This method is called by the method above
-    private async sendNotificationToStaff(count: number) {
+    private async sendNotificationToStaff(count: number): Promise<void> {
         const allStaff = await this.find();
 
         const notifications = allStaff.map((staff) => {

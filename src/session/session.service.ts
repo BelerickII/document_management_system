@@ -133,7 +133,7 @@ export class SessionService {
     }
 
     //Logic that handles the document student upload
-    async docUpload(file: Express.Multer.File, dto: uploadDocDto) {
+    async docUpload(file: Express.Multer.File, dto: uploadDocDto): Promise<{ message: string }> {
         if(!file) throw new BadRequestException('No file uploaded');
 
         const queryRunner = this.dataSource.createQueryRunner();
@@ -206,7 +206,7 @@ export class SessionService {
 
             await queryRunner.commitTransaction();
             await this.staffRepo.checkAndNotifyStaff();
-            return savedUpload;
+            return {message: 'Document Upload Successful'};
 
         } catch (error) {
             await queryRunner.rollbackTransaction();
@@ -235,7 +235,7 @@ export class SessionService {
 
         await this.uploads.save(existingDoc);
 
-        return { message: 'Document sucessfully overwritten' };
+        return { message: 'Document re-upload sucessfull' };
     }
 
     //Logic that marks a single notification as read

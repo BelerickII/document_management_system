@@ -30,7 +30,7 @@ export class studentRepository extends Repository<Student> {
     }
 
     // Logic to get student Id and Session upon login
-    async studentLogin(userId: number, currentSession: string) {
+    async studentLogin(userId: number, currentSession: string | null) {
         const student = await this.createQueryBuilder('student')            
             .leftJoin('student.user', 'user')
             .leftJoinAndSelect('student.dept', 'dept')
@@ -41,14 +41,19 @@ export class studentRepository extends Repository<Student> {
             throw new BadRequestException('Student not found');
         }
 
+        //If there's no active session still allow the student logs in
+        if(currentSession === null) {
+            return {message: 'Registration is not open yet. You will be able to register once a new academic session begins.'};
+        }
+        
         //If the student category has been determined for the current session -> reuse the stored data
         if(student.categoryId && student.academicSession === currentSession) {
             const requiredDocs = await this.docReqService.getRequiredDocsByCategory(student.categoryId);
-            return { student, requiredDocs, categoryCached: true };
+            return { requiredDocs, categoryCached: true };
         }
 
+        //Else determine the category the student belongs too based on their academic level
         const category = await this.determineCategory(student.level, student.mode_of_entry, student.dept.id);
-
         if(!category) {
             throw new BadRequestException('Unable to determine student category');
         }
@@ -61,7 +66,7 @@ export class studentRepository extends Repository<Student> {
 
         const requiredDocs = await this.docReqService.getRequiredDocsByCategory(category.id);
         return {
-            student: { ...student, categoryId: category.id, academicSession: currentSession},
+            // student: { ...student, categoryId: category.id, academicSession: currentSession},
             requiredDocs,
             categoryCached: false,
         };

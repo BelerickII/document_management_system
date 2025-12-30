@@ -30,8 +30,6 @@ export class UserService {
         private readonly staffRepo: staffRepository,
         @InjectRepository(StudentDepartment) private readonly studentDepartmentRepo: Repository<StudentDepartment>,
     ) {}
-    
-    private readonly logger = new Logger('UserService');
 
     //**************Admin Business Logic**************//
     async uploadstudentsCsv(file: Express.Multer.File) {
@@ -47,7 +45,8 @@ export class UserService {
         const successfulImports: Array<{row: number; email?: string; matric_no?: string}> = [];
         const failedImports: Array<{row: number; error: string}> = [];
 
-        let rowNumber = 1;
+        let processedRows = 0;
+        const rowTasks: Promise<void>[] = []
 
         return new Promise((resolve, reject) => {
             stream
@@ -55,10 +54,13 @@ export class UserService {
                 .on('data', async (rawRow: Record<string, any>) => {
                     //pause the parser to safely handle async database operations
                     parser.pause();
-                    rowNumber++;                    
 
-                    try {
-                        /*ensures the rows read from the CSV matches the headers with their expected
+                    processedRows++; 
+                    const rawExcelRows = processedRows + 1;
+                    
+                    const task = (async () => {
+                        try {
+                        /*ensures the rows data read from the CSV matches the headers with their expected
                         values in the dto file and assign it to the variable dto*/
                         const dto = rawRow as CreateStudentDto;
 
@@ -68,50 +70,47 @@ export class UserService {
                         }
 
                         //validate DTO fields with class-validator decorators by calling the function here
-                        await this.validateDtoStudent(dto, rowNumber);
+                        await this.validateDtoStudent(dto, rawExcelRows);
 
                         //if no errors validating, Create User + Student in database
                         await this.createStudentWithUser(dto);
 
                         //Record successful uploads/imports to the DB
                         successfulImports.push({
-                           row: rowNumber,
+                           row: rawExcelRows,
                            email: dto.email,
                            matric_no: dto.matric_no 
                         });
                         
                     } catch (error: any) {
                         const message = error?.message || 'Unknown error during import';
-                        this.logger.warn(`CSV import error at row ${rowNumber}: ${message}`);
+                        // this.logger.warn(`CSV import error at row ${rowNumber}: ${message}`);
                         failedImports.push({
-                            row: rowNumber, 
+                            row: rawExcelRows, 
                             error: message 
                         })
                     } finally {                        
                         //Resume stream processing for next row
                         parser.resume();
                     }
+                    })();
+                    rowTasks.push(task);                    
                 })
-                .on('end', () => {                  
+                .on('end', async () => {
+                    await Promise.allSettled(rowTasks);               
                     //when the stream finishes and all rows have been read
                     resolve({
-                        total: rowNumber,                        
-                        errorCount: failedImports.length + 1,
-                        successfulImports,
-                        failedImports,
+                        total: processedRows,                        
+                        sucessCount: successfulImports.length,
+                        errorCount: failedImports.length,
+                        failedImports,                        
                     });
-
-                    // return {
-                    //     message: `${successfulImports.length} students successfully created`,
-                    // }
-
                 })
                 .on('error', (error: Error) => {
-                    this.logger.error('CSV parsing stream error', error);
+                    // this.logger.error('CSV parsing stream error', error);
                     reject(new InternalServerErrorException('Failed to parse CSV file'));
                 });
         });
-
     }
     
     /*Validates a DTO instance i.e a row from the CSV now a JS object; using class-validator
@@ -157,7 +156,7 @@ export class UserService {
     }
 
     //Logic handling the creation of a single student by the admin
-    async createSingleStudent(dto: CreateStudentDto) {
+    async createSingleStudent(dto: CreateStudentDto): Promise<{ message: string }> {
         try {
             //Trim spaces in strings
             for (const key in dto) {
@@ -173,22 +172,19 @@ export class UserService {
                 throw new BadRequestException(`Student with matric number "${dto.matric_no}" already exists`)
             }
 
-            //validate incoming DTO manually
-            // await this.validateDtoStudent(dto, 1);
-
             //create user + student record using the existing method above
-            const student = await this.createStudentWithUser(dto);
+            await this.createStudentWithUser(dto);
 
-            return{ message:'Student created successfully' };
+            return{ message:'Student added successfully' };
                        
         } catch (error) {
-            this.logger.error('Error creating student record', error);
+            // this.logger.error('Error creating student record', error);
             throw new BadRequestException(error.message || 'Failed to create student record')            
         }
     }
 
     //Logic handling the creation of a Faculty Staff
-    async createStaff (dto: CreateFacultyDto): Promise<FacultyStaff> {
+    async createStaff (dto: CreateFacultyDto): Promise<{ message: string }> {
         try {            
             //Trim spaces in strings
             for (const key in dto) {
@@ -204,9 +200,6 @@ export class UserService {
                 throw new BadRequestException(`Staff with this ID number "${dto.staffID}" already exists`)
             }
 
-            //validate incoming DTO manually
-            // await this.validateDtoStaff(dto, 1);
-
             const user = await this.createUser(dto);
 
             //Create linked staff record in DB
@@ -215,31 +208,28 @@ export class UserService {
                 staffID: dto.staffID                           
             } as Partial<FacultyStaff>);
 
-            return await this.staffRepo.save(staff);        
+            await this.staffRepo.save(staff);
+            return { message: 'Staff added successfully' }       
 
         } catch (error) {
-            this.logger.error('Error creating staff record', error);
+            // this.logger.error('Error creating staff record', error);
             throw new BadRequestException(error.message || 'Failed to create staff record')            
         }
     }
 
     //Logic handling the creation of another admin
-    async createAdmin (dto: CreateUserDto): Promise<User> {
+    async createAdmin (dto: CreateUserDto): Promise<{ message: string }> {
         try {
            //Trim spaces in strings
             for (const key in dto) {
                 if (typeof dto[key] === 'string') dto[key] = dto[key].trim();
             }
 
-            //validate incoming DTO manually
-            // await this.validateDtoAdmin(dto, 1);
-
             const admin = await this.createUser(dto);
-
-            return admin;
+            return { message: 'Super User added successfully'};
 
         } catch (error) {
-            this.logger.error('Error creating admin record', error);
+            // this.logger.error('Error creating admin record', error);
             throw new BadRequestException(error.message || 'Failed to create admin record')
         }
     }

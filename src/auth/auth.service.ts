@@ -49,8 +49,8 @@ export class AuthService {
         if( user.role === 'student') {
             const currentSession = await this.currentSession();
             const studentData = await this.studentRepo.studentLogin(user.id, currentSession);            
-            return { access_token, studentData};
-        } else if (user.role === 'staff' || 'admin') {
+            return { access_token, studentData, canRegister: !!currentSession};
+        } else if (user.role === 'staff' || user.role === 'admin') {
             return { access_token };
         }
     }
@@ -70,15 +70,12 @@ export class AuthService {
     }
 
     //Logic to help get the current session
-    async currentSession(): Promise<string> {
+    async currentSession(): Promise<string | null> {
         const atvSession = await this.acadSession.findOne({
             where: {isActive: true},
         });
-
-        if(!atvSession){
-            throw new UnauthorizedException('No active academic session found.')
-        }
-
-        return atvSession.sessionId;
+        
+        return atvSession?.sessionId ?? null; //nullish coaleasing; I need to look more into this.
+        //return atvSession?.sessionId ? atvSession.sessionId: null ....does the job too. 
     }
 }

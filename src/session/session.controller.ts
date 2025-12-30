@@ -103,7 +103,8 @@ export class SessionController {
     @UseGuards(JwtAuthGaurd, RolesGuard)
     async markOneAsRead(@Param('id', ParseIntPipe) id: number, @Req() req: any) {
         const studentId = req.user.id;
-        return this.sessionService.markAsRead(id, studentId);
+        await this.sessionService.markAsRead(id, studentId);
+        return { message: 'Notification cleared' };
     }
 
     //Triggered when "mark all as read" is clicked
@@ -112,6 +113,7 @@ export class SessionController {
     @UseGuards(JwtAuthGaurd, RolesGuard)
     async markAllAsRead(@Req() req: any) {
         const studentId = req.user.id;
-        return this.sessionService.markAllAsRead(studentId);
+        await this.sessionService.markAllAsRead(studentId);
+        return { message: 'Notifications cleared' };
     }
 }

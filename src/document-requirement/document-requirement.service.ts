@@ -18,10 +18,8 @@ export class DocumentRequirementService {
         @InjectRepository(StudentDepartment) private readonly studentDepartmentRepo: Repository<StudentDepartment>
     ) {}
 
-    private readonly logger = new Logger('DocumentRequirementService');
-
     //Logic to add document to the document requirement table
-    async addDocument(dto: createDocsRequirementDto): Promise<DocsRequirement> {
+    async addDocument(dto: createDocsRequirementDto): Promise<{ message: string }> {
         try {
             for (const key in dto) {
                 if(typeof dto[key] === 'string') dto[key] = dto[key].trim();
@@ -40,15 +38,16 @@ export class DocumentRequirementService {
                 isActive: true,
             });
 
-        return await this.documentRequirementRepo.save(document);
+            await this.documentRequirementRepo.save(document);
+            return { message: 'Document requirement added successfully' };
 
         } catch (error) {
-            throw new BadRequestException(error.message || 'Failed to add document')            
+            throw new BadRequestException(error.message || 'Failed to add document requirement')            
         }
     }
 
     //Logic to add Department and it's maximum level to the DB
-    async addDepartment(dto: createDepartmentDto): Promise<StudentDepartment> {
+    async addDepartment(dto: createDepartmentDto): Promise<{ message: string }> {
         try {
             for (const key in dto) {
                 if(typeof dto[key] === 'string') {
@@ -69,7 +68,8 @@ export class DocumentRequirementService {
                 max_level: dto.max_level,
             });
 
-        return await this.studentDepartmentRepo.save(department);
+            await this.studentDepartmentRepo.save(department);
+            return { message: 'Department added successfully' };
         
         } catch (error) {
             throw new BadRequestException(error.message || 'Failed to add department')
@@ -77,7 +77,7 @@ export class DocumentRequirementService {
     }
 
     //Logic to add student categories to the Category table in the DB
-    async addCategory(dto: createCategoryDto): Promise<Category> {
+    async addCategory(dto: createCategoryDto): Promise<{ message: string }> {
         try {
             for (const key in dto) {
                if(typeof dto[key] === 'string') dto[key] = dto[key].trim(); 
@@ -91,11 +91,12 @@ export class DocumentRequirementService {
                 throw new BadRequestException(`${dto.name} already exists`);
             }
 
-            const category = await this.categoryRepo.create({
+            const category = this.categoryRepo.create({
                 name: dto.name,
             })
     
-        return await this.categoryRepo.save(category);
+            await this.categoryRepo.save(category);
+            return { message: 'Student category added successfully' };
 
         } catch (error) {
            throw new BadRequestException(error.message || 'Failed to add category') 
@@ -103,7 +104,7 @@ export class DocumentRequirementService {
     }
 
     //Logic to map the Document Requirement ID to the Category ID
-    async mapDocToCat(dto: createDocMapsCategoryDto) {
+    async mapDocToCat(dto: createDocMapsCategoryDto): Promise<{ message: string }> {
         try {
             for (const key in dto) {
                if(typeof dto[key] === 'string') {
@@ -119,12 +120,13 @@ export class DocumentRequirementService {
                 throw new BadRequestException(`${dto.docsId} & ${dto.categoryId} already exists, check the Document Maps Category table`);
             }
 
-            const map = await this.docMapsCategoryRepo.create({
+            const map = this.docMapsCategoryRepo.create({
                 docsId: dto.docsId,
                 categoryId: dto.categoryId,
             })
         
-        return await this.docMapsCategoryRepo.save(map);
+            await this.docMapsCategoryRepo.save(map);
+            return { message: 'Mapping successful' };
 
         } catch (error) {
             throw new BadRequestException(error.message || 'Duplicate IDs; Check Carefully')
