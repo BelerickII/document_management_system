@@ -7,6 +7,7 @@ import { AuthModule } from './auth/auth.module';
 import { SseModule } from './sse/sse.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { validationSchema } from './Configuration/typeORM.config';
+import { AppLogger } from 'logger/logger.service';
 
 
 @Module({
@@ -31,6 +32,8 @@ import { validationSchema } from './Configuration/typeORM.config';
         synchronize: true,
       }),
     }),
-  ],  
+  ],
+  providers: [AppLogger],
+  exports: [AppLogger]
 })
 export class AppModule {}
