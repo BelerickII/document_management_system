@@ -35,10 +35,10 @@ export class AuthService {
     async login(user: User) {
         if(user.mustResetPassword === true){
             const tempToken = this.jwtService.sign({sub: user.id, type: 'reset'}, {expiresIn: '10m'});
-            throw new ForbiddenException({
+            return {
                 message: 'Password reset required before continuing',
                 tempToken,
-            });
+            };
         }
 
         //if user has reset their password before do this 👇🏽

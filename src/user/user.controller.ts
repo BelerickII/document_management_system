@@ -158,4 +158,11 @@ export class UserController {
     async getUserById(@Param('id', ParseIntPipe) id: number): Promise<User> {
         return this.userService.getUserById(id)
     }
+
+    //Doesn't need explanation
+    @Post('logout')
+    @UseGuards(JwtAuthGaurd)
+    logout(@Req() req) {
+        return this.userService.logout();
+    }
 }

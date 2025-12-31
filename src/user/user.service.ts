@@ -318,4 +318,9 @@ export class UserService {
     async staffDashboard(staffId: number) {
         return this.staffRepo.staffDashboardOverview(staffId);
     }
+
+    //LOG OUT
+    logout(): { message: string } {
+        return { message: 'Logged out successfully'};
+    }
 }

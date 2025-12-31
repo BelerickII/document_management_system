@@ -8,7 +8,7 @@ import { SseModule } from './sse/sse.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { validationSchema } from './Configuration/typeORM.config';
 import { AppLogger } from 'logger/logger.service';
-
+import 'dotenv/config';
 
 @Module({
   imports: [
@@ -17,7 +17,7 @@ import { AppLogger } from 'logger/logger.service';
     SessionModule,
     AuthModule,
     SseModule,
-    ConfigModule.forRoot({ isGlobal: true, validationSchema}),
+    ConfigModule.forRoot({ isGlobal: true, validationSchema }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -29,7 +29,10 @@ import { AppLogger } from 'logger/logger.service';
         password: config.get<string>('DB_PASSWORD'),
         database: config.get<string>('DB_NAME'),
         autoLoadEntities: true,
-        synchronize: true,
+        synchronize: config.get<string>('NODE_ENV') === 'development',
+        ssl: config.get<string>('NODE_ENV') === 'production'
+          ? { rejectUnauthorized: false }
+          : false,
       }),
     }),
   ],
